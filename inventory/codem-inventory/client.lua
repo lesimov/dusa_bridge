@@ -133,3 +133,8 @@ Framework.GetCurrentWeapon = function() -- codem does not providing current weap
     -- end
     return false
 end
+
+Framework.GetImagePath = function (item)
+    local path = ('nui://%s/html/itemimages/%s.png'):format(Bridge.InventoryName, item)
+    return path
+end

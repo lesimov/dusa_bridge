@@ -137,3 +137,8 @@ Framework.GetCurrentWeapon = function ()
     end
     return nil
 end
+
+Framework.GetImagePath = function (item)
+    local path = ('nui://%s/html/images/%s.png'):format(Bridge.InventoryName, item)
+    return path
+end
