@@ -49,11 +49,12 @@ RegisterNetEvent(Bridge.FrameworkPrefix .. ':setJob', function(Job)
     Framework.Player.Job = {}
     Framework.Player.Job.Name = Job.name
     Framework.Player.Job.Label = Job.label
-    Framework.Player.Job.Duty = Job.onDuty
+    Framework.Player.Job.Duty = Job.onDuty or true
     Framework.Player.Job.Boss = Job.grade_name == 'boss' and true or false
     Framework.Player.Job.Grade = {}
     Framework.Player.Job.Grade.Name = Job.grade_label
     Framework.Player.Job.Grade.Level = Job.grade
+    print('Setjob')
     pcall(Framework.OnJobUpdate)
 end)
 
@@ -62,7 +63,7 @@ RegisterNetEvent(Bridge.FrameworkPrefix .. ':setDuty', function(Duty)
     if PlayerData.job.onDuty == Duty then return end
     local Job = PlayerData.job
     Job.onDuty = Duty
-    Framework.Player.Job.Duty = Duty
+    Framework.Player.Job.Duty = Duty or true
     ESX.SetPlayerData('job', Job)
     pcall(Framework.OnJobDutyUpdate)
 end)
@@ -117,7 +118,7 @@ Framework.SetPlayerData = function(PlayerData)
     if PlayerData.job then
         Framework.Player.Job.Name = PlayerData.job.name
         Framework.Player.Job.Label = PlayerData.job.label
-        Framework.Player.Job.Duty = PlayerData.job.onDuty
+        Framework.Player.Job.Duty = PlayerData.job.onDuty or true
         Framework.Player.Job.Boss = PlayerData.job.grade_name == 'boss' and true or false
         Framework.Player.Job.Grade = Framework.Player.Job.Grade or {}
         Framework.Player.Job.Grade.Name = PlayerData.job.grade_label
