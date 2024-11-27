@@ -495,7 +495,6 @@ Framework.ReturnInventory = function(source)
 end
 
 Framework.GetCurrentWeapon = function (inventory)
-    return ox_inventory:GetCurrentWeapon(inventory)    
     local currentWeapon = GetSelectedPedWeapon(PlayerPedId())
     local weapons = Framework.GetWeaponList()
 

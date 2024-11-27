@@ -157,3 +157,7 @@ Framework.OpenSociety = function(name, type)
         error('Society Type Must Be Job Or Gang', 0)
     end
 end
+
+AddEventHandler('qbx_medical:client:playerRevived', function ()
+    pcall(Framework.OnPlayerSpawn)
+end)

@@ -96,6 +96,7 @@ end)
 
 AddEventHandler(Bridge.FrameworkPrefix .. ':onPlayerSpawn', function()
     isDead = false
+    pcall(Framework.OnPlayerSpawn)
 end)
 
 RegisterNetEvent(Bridge.FrameworkPrefix .. ':setAccountMoney', function(account)

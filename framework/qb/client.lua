@@ -81,6 +81,11 @@ RegisterNetEvent(Bridge.FrameworkPrefix .. ':Client:OnGangUpdate', function(Gang
     pcall(Framework.OnGangUpdate)
 end)
 
+
+RegisterNetEvent('hospital:client:Revive', function ()
+    pcall(Framework.OnPlayerSpawn)
+end)
+
 Framework.SetPlayerData = function(PlayerData)
     Framework.Player.Identifier = PlayerData.citizenid
     Framework.Player.Name = PlayerData.name
