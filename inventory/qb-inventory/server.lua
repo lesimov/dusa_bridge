@@ -5,6 +5,8 @@ module 'shared/table'
 Version = resource.version(Bridge.InventoryName)
 Bridge.Debug('Inventory', Bridge.InventoryName, Version)
 
+if not rawget(_G, "lib") then include('ox_lib', 'init') end
+
 Framework.OnReady(QBCore, function()
     Framework.Items = {}
     for k, v in pairs(QBCore.Shared.Items) do
