@@ -138,7 +138,7 @@ Framework.GetWeaponList = function ()
 end
 
 Framework.GetCurrentWeapon = function ()
-    local weapon = tgiann_inventory:LastWeaponData()
+    local weapon = tgiann_inventory:GetCurrentWeapon()
     if weapon and weapon.info and weapon.info ~= '' then
         return weapon.info
     end

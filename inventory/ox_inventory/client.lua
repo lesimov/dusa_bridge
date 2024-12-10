@@ -78,7 +78,7 @@ Framework.OpenNearbyInventory = function()
 end
 
 Framework.GetCurrentWeapon = function ()
-    return 'server'
+    return exports.ox_inventory:getCurrentWeapon()
 end
 
 Framework.GetImagePath = function (item)

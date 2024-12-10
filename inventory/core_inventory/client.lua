@@ -5,20 +5,21 @@ module 'shared/table'
 Version = resource.version(Bridge.InventoryName)
 Bridge.Debug('Inventory', Bridge.InventoryName, Version)
 
-local qs_inventory = exports[Bridge.InventoryName]
-Framework.OnReady(qs_inventory, function()
+local core_inventory = exports[Bridge.InventoryName]
+Framework.OnReady(core_inventory, function()
     Framework.Items = {}
-    for k, v in pairs(qs_inventory:GetItemList()) do
+    local items = lib.callback.await(Bridge.InventoryName .. ':getItemList', false)
+    for k, v in pairs(items) do
         local item = {}
         if not v.name then v.name = k end
         item.name = v.name
         item.label = v.label
         item.description = v.description
-        item.stack = not v.unique and true
+        item.stack = false
         item.weight = v.weight or 0
         item.close = v.shouldClose == nil and true or v.shouldClose
         item.image = v.image
-        item.type = v.type
+        item.type = v.category
         Framework.Items[v.name] = item
     end
 end)
@@ -33,7 +34,8 @@ Framework.OpenStash = function(name)
         if stash.groups and not isAllowed then return end
         if stash.owner and type(stash.owner) == 'string' and Framework.Player.Identifier ~= stash.owner then return end
         if stash.owner and type(stash.owner) == 'boolean' then name = name .. Framework.Player.Identifier end
-        qs_inventory:RegisterStash(name, stash.slots, stash.weight)
+        TriggerServerEvent('inventory:server:OpenInventory', 'stash', name, { maxweight = stash.weight, slots = stash.slots })
+        TriggerEvent('inventory:client:SetCurrentStash', name)
     end, name)
 end
 
@@ -53,7 +55,9 @@ Framework.OpenShop = function(name)
                     slot = i
                 }
             end
-            TriggerServerEvent("inventory:server:OpenInventory", "shop", shopdata.name, Shop)
+            -- cannot pass shop data
+            TriggerServerEvent('core_inventory:server:openInventory', shopdata.name, 'shop')
+            -- TriggerServerEvent("inventory:server:OpenInventory", "shop", shopdata.name, Shop)
         end
     end, name)
 end
@@ -62,10 +66,12 @@ Framework.CloseInventory = function()
     ExecuteCommand('closeinv')
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 Framework.GetItem = function(item, metadata, strict)
     local items = {}
     ---@cast items Item[]
-    for k, v in pairs(qs_inventory:getUserInventory()) do
+    local player_items = exports.core_inventory:getInventory()
+    for k, v in pairs(player_items) do
         if v.name ~= item then goto skipLoop end
         if metadata and (strict and not table.matches(v.info, metadata) or not table.contains(v.info, metadata)) then goto skipLoop end
         items[#items + 1] = {
@@ -86,6 +92,7 @@ Framework.GetItem = function(item, metadata, strict)
     return items
 end
 
+---@diagnostic disable-next-line: duplicate-set-field
 Framework.HasItem = function(items, count, metadata, strict)
     if type(items) == "string" then
         local counted = 0
@@ -118,26 +125,23 @@ Framework.HasItem = function(items, count, metadata, strict)
 end
 
 Framework.LockInventory = function()
-    LocalPlayer.state:set('inv_busy', true, true)
+    exports.core_inventory:lockInventory()
 end
 
 Framework.UnlockInventory = function()
-    LocalPlayer.state:set('inv_busy', false, true)
+    exports.core_inventory:unlockInventory()
 end
 
 Framework.OpenNearbyInventory = function(playerId)
-    TriggerServerEvent("inventory:server:OpenInventory", "otherplayer", playerId)
+    TriggerServerEvent('core_inventory:server:openInventory', playerId, 'otherplayer', nil, nil, false)
+    -- return lib.callback.await(Bridge.InventoryName .. ':openInventory', false, playerId)
 end
 
-Framework.GetCurrentWeapon = function ()
-    local weapon = qs_inventory:GetCurrentWeapon()
-    if weapon and weapon.info and weapon.info ~= '' then
-        return weapon.info
-    end
-    return nil
+Framework.GetCurrentWeapon = function() -- qb does not providing current weapon data 
+    return false
 end
 
 Framework.GetImagePath = function (item)
-    local path = ('nui://%s/html/images/%s.png'):format(Bridge.InventoryName, item)
+    local path = ('nui://%s/html/img/%s.png'):format(Bridge.InventoryName, item)
     return path
 end
