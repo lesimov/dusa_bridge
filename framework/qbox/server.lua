@@ -67,6 +67,10 @@ Framework.CreateUseableItem = function(name, cb)
     end)
 end
 
+Framework.GetPlayerFromId = function(source)
+    return exports[Bridge.FrameworkName]:GetPlayer(source)
+end
+
 Framework.GetPlayer = function(source)
     local src = source
     local Player = exports[Bridge.FrameworkName]:GetPlayer(src)

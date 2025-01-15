@@ -110,6 +110,10 @@ AddEventHandler(Bridge.FrameworkPrefix .. ':setGang', function()
     pcall(Framework.OnGangUpdate, source)
 end)
 
+AddEventHandler(Bridge.FrameworkPrefix .. ':updatePlayerData', function()
+    pcall(Framework.OnGangUpdate, source)
+end)
+
 Framework.CreateCallback = function(name, cb)
     ESX.RegisterServerCallback(name, cb)
 end
@@ -123,6 +127,10 @@ end
 
 Framework.CreateUseableItem = function(name, cb)
     ESX.RegisterUsableItem(name, cb)
+end
+
+Framework.GetPlayerFromId = function(source)
+    return ESX.GetPlayerFromId(source)
 end
 
 Framework.GetPlayer = function(source)
@@ -225,6 +233,7 @@ Framework.GetPlayer = function(source)
     self.SetMetaData = function(key, value)
         local success, result = pcall(xPlayer.setMeta, key, value)
         if not success then
+            -- esx 1.10.7
             local metadata = xPlayer.get('metadata') or {}
             metadata[key] = value
             xPlayer.set('metadata', metadata)

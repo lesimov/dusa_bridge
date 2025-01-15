@@ -54,7 +54,6 @@ RegisterNetEvent(Bridge.FrameworkPrefix .. ':setJob', function(Job)
     Framework.Player.Job.Grade = {}
     Framework.Player.Job.Grade.Name = Job.grade_label
     Framework.Player.Job.Grade.Level = Job.grade
-    print('Setjob')
     pcall(Framework.OnJobUpdate)
 end)
 
@@ -83,6 +82,13 @@ end)
 RegisterNetEvent(Bridge.FrameworkPrefix .. ':setMetadata', function(Metadata)
     Framework.Player.Metadata = Metadata
     ESX.SetPlayerData('metadata', Metadata)
+end)
+
+RegisterNetEvent(Bridge.FrameworkPrefix .. ':updatePlayerData', function(key, value)
+    if key == 'metadata' then
+        Framework.Player.Metadata = value
+        ESX.SetPlayerData('metadata', value)
+    end
 end)
 
 AddStateBagChangeHandler("metadata", ('player:%s'):format(GetPlayerServerId(PlayerId())), function(_, key, val)

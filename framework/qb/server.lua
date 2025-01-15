@@ -72,6 +72,10 @@ Framework.CreateUseableItem = function(name, cb)
     end)
 end
 
+Framework.GetPlayerFromId = function(source)
+    return QBCore.Functions.GetPlayer(source)
+end
+
 Framework.GetPlayer = function(source)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
