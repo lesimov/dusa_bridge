@@ -370,6 +370,9 @@ module('override')
 -- ❕ LOAD CACHE ❕
 module('shared/cache')
 
+-- ❕ LOAD VERSION CHECKER ❕
+module('version')
+
 -- ❕ LOAD UTILS ❕
 module(('utils/%s'):format(Bridge.Context))
 
