@@ -125,12 +125,6 @@ Framework.OpenNearbyInventory = function(playerId)
 end
 
 Framework.GetCurrentWeapon = function() -- codem does not providing current weapon data 
-    -- local PlayerInventory = codem_inventory:GetClientPlayerInventory()
-    -- for k, v in pairs(PlayerInventory) do
-    --     if v.type == 'weapon' then
-    --         return v
-    --     end
-    -- end
     return false
 end
 

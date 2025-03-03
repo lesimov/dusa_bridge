@@ -493,16 +493,3 @@ Framework.ReturnInventory = function(source)
     Wait(200)
     Framework.ClearInventory(("Confiscated_%s"):format(Player.Identifier))
 end
-
-Framework.GetCurrentWeapon = function (inventory)
-    local currentWeapon = GetSelectedPedWeapon(PlayerPedId())
-    local weapons = Framework.GetWeaponList()
-
-    for k, v in pairs(weapons) do
-        if v.hash == currentWeapon then
-            return v
-        end
-    end
-
-    return nil
-end
