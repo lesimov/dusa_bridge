@@ -5,7 +5,7 @@ lua54 'yes'
 game 'gta5'
 
 author 'Dusa'
-version '0.6.9'
+version '0.7.0'
 description 'Dusa Bridge'
 
 shared_script 'override.lua'

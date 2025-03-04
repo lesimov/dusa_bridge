@@ -526,3 +526,8 @@ lib.callback.register(Bridge.InventoryName .. ':openInventory', function (source
     exports[Bridge.InventoryName]:OpenInventoryById(source, tonumber(player))
     return true
 end)
+
+Framework.GetImagePath = function (item)
+    local path = ('nui://%s/html/images/%s.png'):format(Bridge.InventoryName, item)
+    return path
+end

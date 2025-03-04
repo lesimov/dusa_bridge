@@ -493,3 +493,8 @@ Framework.ReturnInventory = function(source)
     Wait(200)
     Framework.ClearInventory(("Confiscated_%s"):format(Player.Identifier))
 end
+
+Framework.GetImagePath = function (item)
+    local path = ('nui://%s/html/itemimages/%s.png'):format(Bridge.InventoryName, item)
+    return path
+end

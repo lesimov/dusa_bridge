@@ -1,3 +1,5 @@
+if Bridge.Context and Bridge.Context == 'client' then return end
+
 local resourceName = Bridge.Resource
 
 CreateThread(function()

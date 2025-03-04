@@ -121,3 +121,8 @@ end
 Framework.GetCurrentWeapon = function (inventory)
     return ox_inventory:GetCurrentWeapon(inventory)
 end
+
+Framework.GetImagePath = function (item)
+    local path = ('nui://%s/web/images/%s.png'):format(Bridge.InventoryName, item)
+    return path
+end
