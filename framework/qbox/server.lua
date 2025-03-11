@@ -94,6 +94,10 @@ Framework.GetOfflinePlayerByIdentifier = function(citizenid)
     self.Job.Grade.Level = Player.PlayerData.job.grade.level
     self.Metadata = Player.PlayerData.metadata
 
+    self.SetJob = function(job, grade)
+        return exports.qbx_core:SetJob(self.Identifier, job, grade)
+    end
+
     return self
 end
 
@@ -192,7 +196,8 @@ end
 Framework.DoesJobExist = function(job, grade)
     grade = tostring(grade)
     if job and grade then
-        if QBX.Shared.Jobs[job] and QBX.Shared.Jobs[job].grades[grade] then
+        local Jobs = exports.qbx_core:GetJobs()
+        if Jobs[job] and Jobs[job].grades[grade] then
             return true
         else
             return false

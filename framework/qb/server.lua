@@ -99,6 +99,35 @@ Framework.GetOfflinePlayerByIdentifier = function(citizenid)
     self.Job.Grade.Level = Player.PlayerData.job.grade.level
     self.Metadata = Player.PlayerData.metadata
 
+    self.SetJob = function(job, grade)
+        job = job:lower()
+        grade = grade or '0'
+        if not QBCore.Shared.Jobs[job] then return false end
+        self.Job = {
+            name = job,
+            label = QBCore.Shared.Jobs[job].label,
+            onduty = QBCore.Shared.Jobs[job].defaultDuty,
+            type = QBCore.Shared.Jobs[job].type or 'none',
+            grade = {
+                name = 'No Grades',
+                level = 0,
+                payment = 30,
+                isboss = false
+            }
+        }
+        local gradeKey = tostring(grade)
+        local jobGradeInfo = QBCore.Shared.Jobs[job].grades[gradeKey]
+        if jobGradeInfo then
+            self.Job.Grade.Name = jobGradeInfo.name
+            self.PlayerData.job.grade.level = tonumber(gradeKey)
+            self.PlayerData.job.grade.payment = jobGradeInfo.payment
+            self.PlayerData.job.grade.isboss = jobGradeInfo.isboss or false
+            self.PlayerData.job.isboss = jobGradeInfo.isboss or false
+        end
+        
+        return true
+    end
+
     return self
 end
 
@@ -192,6 +221,10 @@ end
 
 Framework.GetPlayerByIdentifier = function(identifier)
     return Framework.GetPlayer(QBCore.Functions.GetPlayerByCitizenId(identifier)?.PlayerData?.source)
+end
+
+Framework.UpdateOfflinePlayerJob = function(identifier, job, grade)
+    
 end
 
 Framework.DoesJobExist = function(job, grade)

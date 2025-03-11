@@ -375,7 +375,6 @@ module('version')
 
 -- ❕ LOAD UTILS ❕
 module(('utils/%s'):format(Bridge.Context))
-
 module('utils/shared')
 
 -- ❕ LOAD HOOKS ❕

@@ -305,6 +305,10 @@ Framework.GetOfflinePlayerByIdentifier = function(identifier)
     self.Job.Grade.Level = PlayerData.job_grade
     self.Metadata = PlayerData.metadata
 
+    self.SetJob = function (job, grade)
+        return MySQL.prepare('UPDATE `users` SET `job` = ?, `job_grade` = ? WHERE `identifier` = ?', { job, grade, self.Identifier })
+    end
+
     return self
 end
 
