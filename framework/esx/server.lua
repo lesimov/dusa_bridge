@@ -32,7 +32,8 @@ RegisterNetEvent(Bridge.Resource .. ':ClientCallback', function(requestId, ...)
 end)
 
 AddEventHandler(Bridge.FrameworkPrefix .. ':playerLoaded', function(playerId, xPlayer)
-    local player = Database.prepare('SELECT `gang`, `gang_grade`, `metadata` FROM `users` WHERE identifier = ?', { xPlayer.getIdentifier() })
+    local player = Database.prepare('SELECT `gang`, `gang_grade`, `metadata` FROM `users` WHERE identifier = ?',
+        { xPlayer.getIdentifier() })
     local gang = player.gang
     local grade = tostring(player.gang_grade)
     local gangObject = {}
@@ -41,7 +42,8 @@ AddEventHandler(Bridge.FrameworkPrefix .. ':playerLoaded', function(playerId, xP
     if Framework.DoesGangExist(gang, grade) then
         gangObject, gradeObject = ESX.Gangs[gang], ESX.Gangs[gang].grades[grade]
     else
-        if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring invalid gang for ^5%s^7 [gang: ^5%s^7, grade: ^5%s^7]'):format(xPlayer.getIdentifier(), gang, grade)) end
+        if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring invalid gang for ^5%s^7 [gang: ^5%s^7, grade: ^5%s^7]')
+            :format(xPlayer.getIdentifier(), gang, grade)) end
         gang, grade = 'none', '0'
         gangObject, gradeObject = ESX.Gangs[gang], ESX.Gangs[gang].grades[grade]
     end
@@ -75,7 +77,8 @@ AddEventHandler('playerDropped', function()
     if xPlayer then
         local metadata = pcall(xPlayer.getMeta)
         if not metadata then
-            Database.prepare('UPDATE `users` SET `metadata` = ? WHERE `identifier` = ?', { json.encode(xPlayer.get('metadata')), xPlayer.getIdentifier() })
+            Database.prepare('UPDATE `users` SET `metadata` = ? WHERE `identifier` = ?',
+                { json.encode(xPlayer.get('metadata')), xPlayer.getIdentifier() })
         end
     end
     TriggerClientEvent(Bridge.FrameworkPrefix .. ':playerLogout', src)
@@ -87,7 +90,8 @@ AddEventHandler(Bridge.FrameworkPrefix .. ':playerLogout', function(playerId)
     if xPlayer then
         local metadata = pcall(xPlayer.getMeta)
         if not metadata then
-            Database.prepare('UPDATE `users` SET `metadata` = ? WHERE `identifier` = ?', { json.encode(xPlayer.get('metadata')), xPlayer.getIdentifier() })
+            Database.prepare('UPDATE `users` SET `metadata` = ? WHERE `identifier` = ?',
+                { json.encode(xPlayer.get('metadata')), xPlayer.getIdentifier() })
         end
     end
     pcall(Framework.OnPlayerUnload, playerId)
@@ -182,11 +186,12 @@ Framework.GetPlayer = function(source)
         xPlayer.set('gang', gangData)
         TriggerEvent(Bridge.FrameworkPrefix .. ':setGang', xPlayer.source, gangData)
         xPlayer.triggerEvent(Bridge.FrameworkPrefix .. ':setGang', gangData)
-        Database.prepare('UPDATE `users` SET gang = ?, gang_grade = ? WHERE identifier = ?', { gang, grade, self.Identifier})
+        Database.prepare('UPDATE `users` SET gang = ?, gang_grade = ? WHERE identifier = ?',
+            { gang, grade, self.Identifier })
         return true
     end
 
-    self.AddMoney = function (type, amount)
+    self.AddMoney = function(type, amount)
         if type == 'cash' then type = 'money' end
         local current = self.GetMoney(type)
         xPlayer.addAccountMoney(type, amount)
@@ -276,6 +281,33 @@ Framework.DoesJobExist = function(job, grade)
     return ESX.DoesJobExist(job, grade)
 end
 
+Framework.GetOfflinePlayerByIdentifier = function(identifier)
+    if not identifier then return nil end
+
+    local PlayerData = MySQL.prepare.await('SELECT identifier, firstname, lastname, dateofbirth, sex, height, job, job_grade, metadata FROM users where identifier = ?', { identifier })
+    if not PlayerData then return nil end
+
+    local self = table.deepclone(Framework.Player)
+    ---@cast self Player
+    if not PlayerData then return nil end
+
+    self.Identifier = PlayerData.identifier
+    self.Firstname = PlayerData.firstname
+    self.Lastname = PlayerData.lastname
+    self.DateOfBirth = PlayerData.dateofbirth or '01/01/2000'
+    self.Gender = PlayerData.sex or "m"
+    self.Height = PlayerData.height or 185
+    self.Job.Name = PlayerData.job
+    self.Job.Label = 'not defined at bridge'
+    self.Job.Duty = 'not defined at bridge'
+    self.Job.Boss = 'not defined at bridge'
+    self.Job.Grade.Name = 'not defined at bridge'
+    self.Job.Grade.Level = PlayerData.job_grade
+    self.Metadata = PlayerData.metadata
+
+    return self
+end
+
 Framework.GetJob = function(job)
     local jobs = ESX.GetJobs()
     local data = {}
@@ -310,27 +342,37 @@ Framework.DoesGangExist = function(gang, grade)
 end
 
 Framework.RegisterSociety = function(name, type)
-    if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return end
+    if type ~= 'job' and type ~= 'gang' then
+        error('Society Type Must Be Job Or Gang', 0)
+        return
+    end
     local society_data_name = ('society_%s'):format(name)
 
     Database.scalar('SELECT `name` FROM `addon_account` WHERE `name` = ?', { society_data_name }, function(addon_account)
         if not addon_account then
-            Database.insert('INSERT IGNORE INTO `addon_account` (`name`, `label`, `shared`) VALUES (?, ?, ?)', { society_data_name, Framework.FirstToUpper(name), 1})
+            Database.insert('INSERT IGNORE INTO `addon_account` (`name`, `label`, `shared`) VALUES (?, ?, ?)',
+                { society_data_name, Framework.FirstToUpper(name), 1 })
         end
     end)
 
-    Database.scalar('SELECT `account_name` FROM `addon_account_data` WHERE `account_name` = ?', { society_data_name }, function(addon_account_data)
-        if not addon_account_data then
-            Database.insert('INSERT IGNORE INTO `addon_account_data` (`account_name`, `money`) VALUES (?, ?)', { society_data_name, 0 })
-        end
-    end)
-    
+    Database.scalar('SELECT `account_name` FROM `addon_account_data` WHERE `account_name` = ?', { society_data_name },
+        function(addon_account_data)
+            if not addon_account_data then
+                Database.insert('INSERT IGNORE INTO `addon_account_data` (`account_name`, `money`) VALUES (?, ?)',
+                    { society_data_name, 0 })
+            end
+        end)
+
     TriggerEvent('esx_addonaccount:refreshAccounts')
-    TriggerEvent('esx_society:registerSociety', name, Framework.FirstToUpper(name), society_data_name, society_data_name, society_data_name, { type = 'public' })
+    TriggerEvent('esx_society:registerSociety', name, Framework.FirstToUpper(name), society_data_name, society_data_name,
+        society_data_name, { type = 'public' })
 end
 
 Framework.SocietyGetMoney = function(name, type)
-    if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return 0 end
+    if type ~= 'job' and type ~= 'gang' then
+        error('Society Type Must Be Job Or Gang', 0)
+        return 0
+    end
     local p = promise.new()
     local society_name = ('society_%s'):format(name)
     TriggerEvent('esx_addonaccount:getSharedAccount', society_name, function(account)
@@ -340,7 +382,10 @@ Framework.SocietyGetMoney = function(name, type)
 end
 
 Framework.SocietyAddMoney = function(name, type, amount)
-    if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return false end
+    if type ~= 'job' and type ~= 'gang' then
+        error('Society Type Must Be Job Or Gang', 0)
+        return false
+    end
     local p = promise.new()
     local society_name = ('society_%s'):format(name)
     TriggerEvent('esx_addonaccount:getSharedAccount', society_name, function(account)
@@ -355,7 +400,10 @@ Framework.SocietyAddMoney = function(name, type, amount)
 end
 
 Framework.SocietyRemoveMoney = function(name, type, amount)
-    if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return false end
+    if type ~= 'job' and type ~= 'gang' then
+        error('Society Type Must Be Job Or Gang', 0)
+        return false
+    end
     local p = promise.new()
     local society_name = ('society_%s'):format(name)
     TriggerEvent('esx_addonaccount:getSharedAccount', society_name, function(account)
@@ -428,7 +476,8 @@ Citizen.CreateThreadNow(function()
             if ESX.Gangs[v.gang_name] then
                 ESX.Gangs[v.gang_name].grades[tostring(v.grade)] = v
             else
-                if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang grades for ^5"%s"^0 due to missing gang'):format(v.gang_name)) end
+                if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang grades for ^5"%s"^0 due to missing gang')
+                    :format(v.gang_name)) end
             end
         end
     end
@@ -436,7 +485,8 @@ Citizen.CreateThreadNow(function()
     for _, v in pairs(ESX.Gangs) do
         if next(v.grades) == nil then
             ESX.Gangs[v.name] = nil
-            if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang ^5"%s"^0 due to no gang grades found'):format(v.name)) end
+            if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang ^5"%s"^0 due to no gang grades found'):format(v
+                .name)) end
         end
     end
 

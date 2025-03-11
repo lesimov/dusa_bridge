@@ -76,6 +76,32 @@ Framework.GetPlayerFromId = function(source)
     return QBCore.Functions.GetPlayer(source)
 end
 
+Framework.GetOfflinePlayerByIdentifier = function(citizenid)
+    if not citizenid then return nil end
+
+    local Player = QBCore.Functions.GetOfflinePlayerByCitizenId(citizenid)
+    if not Player then return nil end
+
+    local self = table.deepclone(Framework.Player)
+
+    self.Identifier = Player.PlayerData.citizenid
+    self.Name = Player.PlayerData.name
+    self.Firstname = Player.PlayerData.charinfo.firstname
+    self.Lastname = Player.PlayerData.charinfo.lastname
+    self.DateOfBirth = Player.PlayerData.charinfo.birthdate or '00-00-0000'
+    self.Gender = (Player.PlayerData.charinfo.gender == 0 and 'm' or 'f')
+    self.Nationality = Player.PlayerData.charinfo.nationality
+    self.Job.Name = Player.PlayerData.job.name
+    self.Job.Label = Player.PlayerData.job.label
+    self.Job.Duty = Player.PlayerData.job.onduty
+    self.Job.Boss = Player.PlayerData.job.isboss
+    self.Job.Grade.Name = Player.PlayerData.job.grade.name
+    self.Job.Grade.Level = Player.PlayerData.job.grade.level
+    self.Metadata = Player.PlayerData.metadata
+
+    return self
+end
+
 Framework.GetPlayer = function(source)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
