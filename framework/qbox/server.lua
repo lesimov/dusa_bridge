@@ -189,6 +189,10 @@ Framework.GetPlayer = function(source)
     return self
 end
 
+Framework.GetPlayers = function ()
+    return exports.qbx_core:GetQBPlayers()
+end
+
 Framework.GetPlayerByIdentifier = function(identifier)
     return Framework.GetPlayer(exports[Bridge.FrameworkName]:GetPlayerByCitizenId(identifier)?.PlayerData?.source)
 end

@@ -219,12 +219,12 @@ Framework.GetPlayer = function(source)
     return self
 end
 
-Framework.GetPlayerByIdentifier = function(identifier)
-    return Framework.GetPlayer(QBCore.Functions.GetPlayerByCitizenId(identifier)?.PlayerData?.source)
+Framework.GetPlayers = function ()
+    return QBCore.Functions.GetQBPlayers()
 end
 
-Framework.UpdateOfflinePlayerJob = function(identifier, job, grade)
-    
+Framework.GetPlayerByIdentifier = function(identifier)
+    return Framework.GetPlayer(QBCore.Functions.GetPlayerByCitizenId(identifier)?.PlayerData?.source)
 end
 
 Framework.DoesJobExist = function(job, grade)

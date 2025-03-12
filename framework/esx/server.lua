@@ -273,6 +273,10 @@ Framework.GetPlayer = function(source)
     return self
 end
 
+Framework.GetPlayers = function ()
+    return ESX.GetExtendedPlayers()
+end
+
 Framework.GetPlayerByIdentifier = function(identifier)
     return Framework.GetPlayer(ESX.GetPlayerFromIdentifier(identifier)?.source)
 end
