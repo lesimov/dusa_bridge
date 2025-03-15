@@ -101,6 +101,7 @@ AddEventHandler(Bridge.FrameworkPrefix .. ':setJob', function()
     pcall(Framework.OnJobUpdate, source)
 end)
 
+
 AddEventHandler(Bridge.FrameworkPrefix .. ':setDuty', function(bool)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
@@ -159,11 +160,11 @@ Framework.GetPlayer = function(source)
     self.Job.Boss = PlayerJob.grade_name == 'boss' and true or false
     self.Job.Grade.Name = PlayerJob.grade_label
     self.Job.Grade.Level = PlayerJob.grade
-    self.Gang.Name = PlayerGang.name
-    self.Gang.Label = PlayerGang.label
-    self.Gang.Boss = PlayerGang.grade_name == 'boss' and true or false
-    self.Gang.Grade.Name = PlayerGang.grade_label
-    self.Gang.Grade.Level = PlayerGang.grade
+    -- self.Gang.Name = PlayerGang.name
+    -- self.Gang.Label = PlayerGang.label
+    -- self.Gang.Boss = PlayerGang.grade_name == 'boss' and true or false
+    -- self.Gang.Grade.Name = PlayerGang.grade_label
+    -- self.Gang.Grade.Level = PlayerGang.grade
     local getmeta, metadata = pcall(xPlayer.getMeta)
     self.Metadata = (getmeta and metadata or xPlayer.get('metadata'))
 
@@ -295,6 +296,18 @@ Framework.GetOfflinePlayerByIdentifier = function(identifier)
     ---@cast self Player
     if not PlayerData then return nil end
 
+    local job = Framework.GetJob(PlayerData.job)
+    
+    local grades = {}
+
+    for key, grade in pairs(job.grades) do
+        grades[tonumber(key)] = {
+            id = tonumber(key),
+            label = grade.name,
+            isboss = grade.name == 'boss' and true or false
+        }
+    end
+
     self.Identifier = PlayerData.identifier
     self.Firstname = PlayerData.firstname
     self.Lastname = PlayerData.lastname
@@ -302,10 +315,10 @@ Framework.GetOfflinePlayerByIdentifier = function(identifier)
     self.Gender = PlayerData.sex or "m"
     self.Height = PlayerData.height or 185
     self.Job.Name = PlayerData.job
-    self.Job.Label = 'not defined at bridge'
-    self.Job.Duty = 'not defined at bridge'
-    self.Job.Boss = 'not defined at bridge'
-    self.Job.Grade.Name = 'not defined at bridge'
+    self.Job.Label = job.label
+    self.Job.Duty = false
+    self.Job.Boss = grades[PlayerData.job_grade].isboss
+    self.Job.Grade.Name = grades[PlayerData.job_grade].label
     self.Job.Grade.Level = PlayerData.job_grade
     self.Metadata = PlayerData.metadata
 
