@@ -144,8 +144,3 @@ Framework.GetCurrentWeapon = function ()
     end
     return nil
 end
-
-Framework.GetImagePath = function (item)
-    local path = ('nui://%s/images/%s.png'):format('inventory_images', item)
-    return path
-end

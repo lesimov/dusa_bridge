@@ -489,8 +489,3 @@ lib.callback.register(Bridge.InventoryName .. ':openInventory', function (source
     exports.core_inventory:openInventory(playerid, 'primary-'.. Player.Identifier, 'primary', nil, nil, true, nil, false)
     return true
 end)
-
-Framework.GetImagePath = function (item)
-    local path = ('nui://%s/html/img/%s.png'):format(Bridge.InventoryName, item)
-    return path
-end

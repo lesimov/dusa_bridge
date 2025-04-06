@@ -140,8 +140,3 @@ end
 Framework.GetCurrentWeapon = function() -- qb does not providing current weapon data 
     return false
 end
-
-Framework.GetImagePath = function (item)
-    local path = ('nui://%s/html/img/%s.png'):format(Bridge.InventoryName, item)
-    return path
-end
