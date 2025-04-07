@@ -5,9 +5,12 @@ module 'shared/table'
 Version = resource.version(Bridge.InventoryName)
 Bridge.Debug('Inventory', Bridge.InventoryName, Version)
 
-Framework.OnReady(QBCore, function()
+if not rawget(_G, "lib") then include('ox_lib', 'init') end
+
+local core_inventory = exports[Bridge.InventoryName]
+Framework.OnReady(core_inventory, function()
     Framework.Items = {}
-    for k, v in pairs(QBCore.Shared.Items) do
+    for k, v in pairs(core_inventory:getItemsList()) do
         local item = {}
         if not v.name then v.name = k end
         item.name = v.name
@@ -21,21 +24,24 @@ Framework.OnReady(QBCore, function()
     end
 end)
 
+lib.callback.register(Bridge.Resource .. ':bridge:GetItems', function()
+    return core_inventory:getItemsList()
+end)
+
 ---Get Stash Items
 ---@return Item[]
 local function GetStashItems(inventory)
-    inventory = inventory:gsub("%-", "_")
+    -- inventory = inventory:gsub("%-", "_")
     local items = {}
-	local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
-	if not result then return items end
 
-	local stashItems = json.decode(result)
-	if not stashItems then return items end
+    local stashItems = core_inventory:getInventory(inventory)
+    if not stashItems then return items end
 
-	for _, item in pairs(stashItems) do
-		local itemInfo = Framework.Items[item.name:lower()]
-		if itemInfo then
-            items[item.slot] = {
+    for _, item in pairs(stashItems) do
+        local itemInfo = Framework.Items[item.name:lower()]
+        if itemInfo then
+            local slot = item.slot or item.slots[1]
+            items[slot] = {
                 name = itemInfo.name,
                 count = tonumber(item.amount),
                 label = itemInfo.label,
@@ -46,11 +52,11 @@ local function GetStashItems(inventory)
                 close = itemInfo.close,
                 image = itemInfo.image,
                 type = itemInfo.type,
-                slot = item.slot,
+                slot = slot,
             }
-		end
-	end
-	return items
+        end
+    end
+    return items
 end
 
 ---Add Item To Stash
@@ -61,57 +67,10 @@ end
 ---@param slot? number
 ---@return boolean
 local function AddStashItem(inventory, item, count, metadata, slot)
-    inventory = inventory:gsub("%-", "_")
+    -- inventory = inventory:gsub("%-", "_")
     count = tonumber(count) or 1
-    local stash = {}
-    local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
-    if result then stash = json.decode(result) end
-	local itemInfo = QBCore.Shared.Items[item:lower()]
-    metadata = metadata or {}
-    metadata.created = metadata.created or os.time()
-    metadata.quality = metadata.quality or 100
-    if itemInfo['type'] == 'weapon' then
-        metadata.serie = metadata.serie or tostring(Framework.RandomInteger(2) .. Framework.RandomString(3) .. Framework.RandomInteger(1) .. Framework.RandomString(2) .. Framework.RandomInteger(3) .. Framework.RandomString(4))
-    end
-	if not itemInfo.unique then
-        if type(slot) == "number" and stash[slot] and stash[slot].name == item and table.matches(metadata, stash[slot].info) then
-            stash[slot].amount = stash[slot].amount + count
-        else
-            slot = #stash + 1
-            stash[slot] = {
-                name = itemInfo["name"],
-				amount = count,
-				info = metadata or {},
-				label = itemInfo["label"],
-				description = itemInfo["description"] or "",
-				weight = itemInfo["weight"],
-				type = itemInfo["type"],
-				unique = itemInfo["unique"],
-				useable = itemInfo["useable"],
-				image = itemInfo["image"],
-				slot = slot,
-            }
-        end
-	else
-        slot = #stash + 1
-        stash[slot] = {
-            name = itemInfo["name"],
-			amount = count,
-			info = metadata or {},
-			label = itemInfo["label"],
-			description = itemInfo["description"] or "",
-			weight = itemInfo["weight"],
-			type = itemInfo["type"],
-			unique = itemInfo["unique"],
-			useable = itemInfo["useable"],
-			image = itemInfo["image"],
-			slot = slot,
-        }
-    end
-    Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-		['stash'] = inventory,
-		['items'] = json.encode(stash)
-	})
+    core_inventory:addItem(inventory, item, count, metadata, 'stash')
+
     return true
 end
 
@@ -123,74 +82,17 @@ end
 ---@param slot? number
 ---@return boolean
 local function RemoveStashItem(inventory, item, count, metadata, slot)
-    inventory = inventory:gsub("%-", "_")
-    local stash = {}
-    local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
-    if result then stash = json.decode(result) else return false end
-    count = tonumber(count) or 1
-	if type(slot) == "number" and stash[slot] and stash[slot].name == item then
-        if metadata and not table.matches(metadata, stash[slot].info) then return false end
-        if stash[slot].amount > count then
-            stash[slot].amount = stash[slot].amount - count
-        else
-            stash[slot] = nil
-        end
-        Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-            ['stash'] = inventory,
-            ['items'] = json.encode(stash)
-        })
-        return true
-	else
-        local removed = count
-        local newstash = stash
-        for _, v in pairs(stash) do
-            if v.name == item then
-                if metadata and table.matches(metadata, v.info) then 
-                    if removed >= v.amount then
-                        newstash[v.slot] = nil
-                        removed = removed - v.amount
-                    else
-                        newstash[v.slot].amount = newstash[v.slot].amount - removed
-                        removed = removed - removed
-                    end
-                elseif not metadata then
-                    if removed >= v.amount then
-                        newstash[v.slot] = nil
-                        removed = removed - v.amount
-                    else
-                        newstash[v.slot].amount = newstash[v.slot].amount - removed
-                        removed = removed - removed
-                    end
-                end
-            end
-            
-            if removed == 0 then
-                break
-            end
-        end
-
-        if removed == 0 then
-            Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-                ['stash'] = inventory,
-                ['items'] = json.encode(newstash)
-            })
-            return true
-        else
-            return false
-        end
-	end
+    -- inventory = inventory:gsub("%-", "_")
+    local removed = core_inventory:removeItem(inventory, item, count, 'stash')
+    return removed
 end
 
 Framework.AddItem = function(inventory, item, count, metadata, slot)
     if type(inventory) == "string" then
         return AddStashItem(inventory, item, count, metadata, slot)
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        if Player.Functions.AddItem(item, count, slot, metadata) then
-            TriggerClientEvent('inventory:client:ItemBox', inventory, QBCore.Shared.Items[item], 'add', count)
-            return true
-        end
-        return false
+        if not core_inventory:canCarry(inventory, item, count) then return false end
+        return core_inventory:addItem(inventory, item, count, metadata, 'content')
     end
     return false
 end
@@ -199,59 +101,7 @@ Framework.RemoveItem = function(inventory, item, count, metadata, slot)
     if type(inventory) == "string" then
         return RemoveStashItem(inventory, item, count, metadata, slot)
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        if slot then
-            if metadata then
-                if table.matches(metadata, Framework.GetItemMetadata(inventory, slot)) then
-                    Player.Functions.RemoveItem(item, count, slot)
-                    TriggerClientEvent('inventory:client:ItemBox', inventory, QBCore.Shared.Items[item], "remove", count)
-                end
-                return false
-            else
-                if Player.Functions.GetItemBySlot(slot) and Player.Functions.RemoveItem(item, count, slot) then
-                    TriggerClientEvent('inventory:client:ItemBox', inventory, QBCore.Shared.Items[item], "remove", count)
-                    return true
-                else
-                    return false
-                end
-            end
-        else
-            local removed = count
-            local removedItems = {}
-            local items = Player.Functions.GetItemsByName(item)
-            for _, v in pairs(items) do
-                if metadata and table.matches(metadata, Framework.GetItemMetadata(inventory, v.slot)) then
-                    if removed >= v.amount and Player.Functions.RemoveItem(item, v.amount, v.slot) then
-                        removedItems[#removedItems+1] = v
-                        removed = removed - v.amount
-                    elseif Player.Functions.RemoveItem(item, removed, v.slot) then
-                        removedItems[#removedItems+1] = v
-                        removed = removed - removed
-                    end
-                elseif not metadata then
-                    if removed >= v.amount and Player.Functions.RemoveItem(item, v.amount, v.slot) then
-                        removedItems[#removedItems+1] = v
-                        removed = removed - v.amount
-                    elseif Player.Functions.RemoveItem(item, removed, v.slot) then
-                        removedItems[#removedItems+1] = v
-                        removed = removed - removed
-                    end
-                end
-                if removed == 0 then
-                    break
-                end
-            end
-
-            if removed == 0 then
-                TriggerClientEvent('inventory:client:ItemBox', inventory, QBCore.Shared.Items[item], "remove", count)
-                return true
-            else
-                for _, v in pairs(removedItems) do
-                    Framework.AddItem(inventory, item, v.amount, v.slot, v.info)
-                end
-                return false
-            end
-        end
+        return core_inventory:removeItem(inventory, item, count, 'content')
     end
     return false
 end
@@ -268,11 +118,10 @@ Framework.GetItem = function(inventory, item, metadata, strict)
             ::skipLoop::
         end
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        for k, v in pairs(Player.PlayerData.items) do 
+        for k, v in pairs(core_inventory:getInventory(inventory)) do
             if v.name ~= item then goto skipLoop end
             if metadata and (strict and not table.matches(v.info, metadata) or not table.contains(v.info, metadata)) then goto skipLoop end
-            items[#items+1] = {
+            items[#items + 1] = {
                 name = v.name,
                 count = tonumber(v.amount),
                 label = v.label,
@@ -283,7 +132,7 @@ Framework.GetItem = function(inventory, item, metadata, strict)
                 close = v.shouldClose == nil and true or v.shouldClose,
                 image = v.image,
                 type = v.type,
-                slot = v.slot,
+                slot = v.slot or v.slots[1],
             }
             ::skipLoop::
         end
@@ -303,9 +152,7 @@ Framework.GetItemCount = function(inventory, item, metadata, strict)
             ::skipLoop::
         end
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        local items = Player.Functions.GetItemsByName(item)
-        for k, v in pairs(items) do
+        for k, v in pairs(core_inventory:getInventory(inventory)) do
             if v.name ~= item then goto skipLoop end
             if metadata and (strict and not table.matches(v.info, metadata) or not table.contains(v.info, metadata)) then
                 goto skipLoop
@@ -322,7 +169,7 @@ Framework.HasItem = function(inventory, items, count, metadata, strict)
     if type(items) == "string" then
         local counted = 0
         for _, v in pairs(Framework.GetItem(inventory, items, metadata, strict)) do
-            counted+=v.count
+            counted += v.count
         end
         return counted >= (count or 1)
     elseif type(items) == "table" then
@@ -330,7 +177,7 @@ Framework.HasItem = function(inventory, items, count, metadata, strict)
             for item, amount in pairs(items) do
                 local counted = 0
                 for _, v in pairs(Framework.GetItem(inventory, item, metadata, strict)) do
-                    counted+=v.count
+                    counted += v.count
                 end
                 if counted < amount then return false end
             end
@@ -340,7 +187,7 @@ Framework.HasItem = function(inventory, items, count, metadata, strict)
             for i = 1, #items do
                 local item = items[i]
                 for _, v in pairs(Framework.GetItem(inventory, item, metadata, strict)) do
-                    counted+=v.count
+                    counted += v.count
                 end
                 if counted < (count or 1) then return false end
             end
@@ -351,46 +198,27 @@ end
 
 Framework.GetItemMetadata = function(inventory, slot)
     if type(inventory) == "string" then
-        inventory = inventory:gsub("%-", "_")
-        local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
-        if not result then return nil end
-        local stash = json.decode(result)
+        -- inventory = inventory:gsub("%-", "_")
+        local stash = core_inventory:getInventory(inventory)
         for k, item in pairs(stash) do
-            if item.slot == slot then
+            if item.slot == slot or item.slots?[1] == slot then
                 return item.info
             end
         end
         return {}
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        return Player.Functions.GetItemBySlot(slot)?.info
+        return core_inventory:getItemBySlot(inventory, slot)?.info
     end
     return {}
 end
 
 Framework.SetItemMetadata = function(inventory, slot, metadata)
     if type(inventory) == "string" then
-        inventory = inventory:gsub("%-", "_")
-        local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
-        if not result then return end
-        local stash = json.decode(result)
-        for k, item in pairs(stash) do
-            if item.slot == slot then
-                stash[k].info = metadata
-                break
-            end
-        end
-        if not next(stash) then return end
-        Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-            ['stash'] = inventory,
-            ['items'] = json.encode(stash)
-        })
+        -- inventory = inventory:gsub("%-", "_")
+        core_inventory:setMetadata(inventory, slot, metadata)
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        if Player.PlayerData.items[slot] then
-            Player.PlayerData.items[slot].info = metadata
-            Player.Functions.SetInventory(Player.PlayerData.items)
-        end
+        -- local item = core_inventory:GetItemBySlot(inventory, slot)
+        core_inventory:setMetadata(inventory, slot, metadata)
     end
 end
 
@@ -399,8 +227,7 @@ Framework.GetInventory = function(inventory)
     if type(inventory) == "string" then
         items = GetStashItems(inventory)
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        for k, v in pairs(Player.PlayerData.items) do
+        for k, v in pairs(core_inventory:getInventory(inventory)) do
             items[k] = {
                 name = v.name,
                 count = tonumber(v.amount),
@@ -412,7 +239,7 @@ Framework.GetInventory = function(inventory)
                 close = v.shouldClose == nil and true or v.shouldClose,
                 image = v.image,
                 type = v.type,
-                slot = v.slot,
+                slot = v.slot or v.slots[1],
             }
         end
     end
@@ -421,33 +248,58 @@ end
 
 Framework.ClearInventory = function(inventory, keep)
     if type(inventory) == "string" then
-        inventory = inventory:gsub("%-", "_")
-        exports.core_inventory:clearInventory(inventory, inventory)
+        -- inventory = inventory:gsub("%-", "_")
+        local stash = {}
+        if keep then
+            local stashItems = core_inventory:getInventory(inventory)
+            if not next(stashItems) then return end
+
+            local keepType = type(keep)
+            if keepType == "string" then
+                for k, v in pairs(stashItems) do
+                    if v.name == keep then
+                        stash[k] = v
+                    end
+                end
+            elseif keepType == "table" and table.type(keep) == "array" then
+                for k, v in pairs(stashItems) do
+                    for i = 1, #keep do
+                        if v.name == keep[i] then
+                            stash[k] = v
+                        end
+                    end
+                end
+            end
+        end
+
+        core_inventory:clearInventory(inventory)
+        for k, v in pairs(stash) do
+            core_inventory:addItem(inventory, v.name, v.amount, v.info, 'stash')
+        end
     elseif type(inventory) == "number" then
-        local Player = QBCore.Functions.GetPlayer(inventory)
-        Player.Functions.ClearInventory(keep)
-        exports.core_inventory:clearInventory(inventory, source)
+        core_inventory:clearInventory(inventory) -- no keep parameter
     end
 end
 
 local stashes = {}
 Framework.RegisterStash = function(name, slots, weight, owner, groups)
-    name = name:gsub("%-", "_")
+    -- name = name:gsub("%-", "_")
     if not stashes[name] then
         stashes[name] = { slots = slots, weight = weight, owner = owner, groups = groups }
     end
 end
 
 Framework.CreateCallback(Bridge.Resource .. ':bridge:GetStash', function(source, cb, name)
-    name = name:gsub("%-", "_")
-    local items = exports.core_inventory:getInventory('stash-'..name)
-    cb(items or nil)
+    -- name = name:gsub("%-", "_")
+    cb(stashes[name] and stashes[name] or nil)
 end)
 
 local shops = {}
 Framework.RegisterShop = function(name, data)
-    if shops[name] then return end
-    shops[name] = data
+    -- if shops[name] then return end
+    -- shops[name] = data
+    -- core_inventory:RegisterShop(name, data)
+    print('^1[DUSA_BRIDGE] ^3 Shop register is not available for core inv ^0')
 end
 
 Framework.CreateCallback(Bridge.Resource .. ':bridge:OpenShop', function(source, cb, name)
@@ -461,31 +313,15 @@ Framework.CreateCallback(Bridge.Resource .. ':bridge:OpenShop', function(source,
 end)
 
 Framework.ConfiscateInventory = function(source)
-    local Player = Framework.GetPlayer(source)
-    exports.core_inventory:confiscateInventory('primary-'.. Player.Identifier, nil, 'primary')
+    local src = source
+    core_inventory:confiscatePlayerInventory(src)
 end
 
 Framework.ReturnInventory = function(source)
-    exports.core_inventory:returnPlayerInventory(source)
+    local src = source
+    core_inventory:returnPlayerInventory(src)
 end
 
-Framework.GetCurrentWeapon = function (inventory)
+Framework.GetCurrentWeapon = function()
     return nil
 end
-
-lib.callback.register(Bridge.InventoryName .. ':getItemList', function ()
-    local items = exports[Bridge.InventoryName]:getItemsList()
-    return items
-end)
-
-lib.callback.register(Bridge.InventoryName .. ':openInventory', function (source, player)
-    local ped = GetPlayerPed(source)
-    local coords = GetEntityCoords(ped)
-    local playerId = lib.getClosestPlayer(coords, 2.5)
-    
-    if playerId ~= player then return end
-    local Player = Framework.GetPlayer(playerId)
-    
-    exports.core_inventory:openInventory(playerid, 'primary-'.. Player.Identifier, 'primary', nil, nil, true, nil, false)
-    return true
-end)

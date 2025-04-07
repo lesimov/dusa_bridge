@@ -236,8 +236,15 @@ end
 -- ❕ TGIANN-INVENTORY ❕
 if not Bridge.Inventory and GetResourceState('tgiann-inventory') ~= 'missing' then
     if not Bridge.InventoryName then Bridge.InventoryName = 'tgiann-inventory' end
-    Bridge.InventoryImagePath = '@inventory_images/images/'
+    Bridge.InventoryImagePath = 'inventory_images/images/'
     Bridge.Inventory = 'tgiann-inventory'
+end
+
+-- ❕ CORE_INVENTORY ❕
+if not Bridge.Inventory and GetResourceState('core_inventory') ~= 'missing' then
+    if not Bridge.InventoryName then Bridge.InventoryName = 'core_inventory' end
+    Bridge.InventoryImagePath = ('%s/html/img/'):format(Bridge.InventoryName)
+    Bridge.Inventory = 'core_inventory'
 end
 
 -- ❕ CUSTOM INVENTORY ❕
