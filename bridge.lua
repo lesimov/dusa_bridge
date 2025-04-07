@@ -220,8 +220,12 @@ end
 
 
 -- ❕ OX_INVENTORY ❕
-if not Bridge.Inventory and GetResourceState('ox_inventory') ~= 'missing' then
-    if not Bridge.InventoryName then Bridge.InventoryName = 'ox_inventory' end
+if not Bridge.Inventory and (GetResourceState('ox_inventory') ~= 'missing' or GetResourceState('ak47_inventory') ~= 'missing') then
+    if not Bridge.InventoryName then 
+        if GetResourceState('ox_inventory') ~= 'missing' then Bridge.InventoryName = 'ox_inventory' end
+        if GetResourceState('ak47_inventory') ~= 'missing' then Bridge.InventoryName = 'ak47_inventory' end
+    end
+
     Bridge.InventoryImagePath = ('%s/web/images/'):format(Bridge.InventoryName)
     Bridge.Inventory = 'ox_inventory'
 end
