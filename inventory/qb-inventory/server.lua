@@ -515,14 +515,3 @@ end
 Framework.GetCurrentWeapon = function (inventory)
     return nil
 end
-
-lib.callback.register(Bridge.InventoryName .. ':openInventory', function (source, player)
-    local ped = GetPlayerPed(source)
-    local coords = GetEntityCoords(ped)
-    local playerId = lib.getClosestPlayer(coords, 2.5)
-
-    if playerId ~= player then return end
-
-    exports[Bridge.InventoryName]:OpenInventoryById(source, tonumber(player))
-    return true
-end)
