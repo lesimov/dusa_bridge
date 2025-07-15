@@ -13,9 +13,22 @@ shared_script {
     '@ox_lib/init.lua',
 }
 
+-- ui_page 'interaction/web/index.html'
+
+client_scripts {
+    'interaction/init.lua',
+    -- 'interaction/client/**/*.lua',
+    'interaction/client/*.lua',
+}
+
 files {
     '**/**/client.lua',
     '**/*.lua',
+    'interaction/**',
+    'interaction/web/*.*',
+    'interaction/web/js/*.*',
+    -- 'interaction/client/*.lua',
+    -- 'interaction/client/modules/*.lua',
 }
 
 escrow_ignore {

@@ -312,7 +312,6 @@ if not Bridge.Disabled['target'] and not Bridge.TargetName then
     "No Compatible Target Resource Found. Please ensure you're using a supported target and that it's running before the bridge."))
     return
 end
-
 -- ❗ ZONES DETECTION ❗
 
 -- ❕ OVERRIDE ZONE ❕
@@ -433,3 +432,19 @@ end
 if not Bridge.Disabled['menu'] then
     module(('menu/%s/%s'):format(Bridge.Menu, Bridge.Context))
 end
+
+-- -- ❕ LOAD INTERACTION ❕
+-- if not Bridge.Disabled['interaction'] and Bridge.Context == 'client' then
+--     print('[^2BRIDGE^0] ^1Interaction^0 Loading')
+--     print(1)
+--     module('interaction/init')
+--     print(2)
+--     module(('interaction/%s/api'):format(Bridge.Context))
+--     print(3)
+--     module(('interaction/%s/defaults'):format(Bridge.Context))
+--     print(4)
+--     module(('interaction/%s/main'):format(Bridge.Context))
+--     print(5)
+
+--     print('[^2BRIDGE^0] ^1Interaction^0 Loaded')
+-- end
