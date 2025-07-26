@@ -618,7 +618,7 @@ RegisterNUICallback('select', function(data, cb)
             elseif option.command then
                 ExecuteCommand(option.command)
             end
-            local cooldown = option.cooldown or 1500
+            local cooldown = option.cooldown or 500
             store.cooldownEndTime = currentTime + cooldown
             if cooldown > 0 then
                 dui.sendMessage('setCooldown', true)
