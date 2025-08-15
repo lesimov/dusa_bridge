@@ -182,6 +182,27 @@ local function RemoveStashItem(inventory, item, count, metadata, slot)
 	end
 end
 
+Framework.OpenStash = function(src, name)
+    name = name:gsub("%-", "_")
+    local stash = stashes[name]
+    if stash then
+        local Player = Framework.GetPlayer(src)
+        if not Player then return end
+    
+        local isAllowed = false
+        if stash.groups and Framework.HasJob(stash.groups, Player) then isAllowed = true end
+        if stash.groups and Framework.HasGang(stash.groups, Player) then isAllowed = true end
+        if type(stash.groups) == "table" and (stash.groups and not isAllowed) then return end
+        if stash.owner and type(stash.owner) == 'string' and Player.Identifier ~= stash.owner then return end
+        if stash.owner and type(stash.owner) == 'boolean' then name = name .. Player.Identifier end
+        
+        tgiann_inventory:OpenInventory(src, "stash", name, {
+            maxweight = stash.weight,
+            slots = stash.slots,
+        })
+    end
+end
+
 Framework.AddItem = function(inventory, item, count, metadata, slot)
     if type(inventory) == "string" then
         return AddStashItem(inventory, item, count, metadata, slot)
