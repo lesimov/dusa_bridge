@@ -11,6 +11,7 @@ Framework.OnReady(QBCore, function()
     Framework.Items = {}
     for k, v in pairs(QBCore.Shared.Items) do
         local item = {}
+        if type(v) == 'string' then return end
         if not v.name then v.name = k end
         item.name = v.name
         item.label = v.label

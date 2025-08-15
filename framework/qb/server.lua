@@ -21,6 +21,7 @@ RegisterNetEvent(Bridge.FrameworkPrefix .. ':Server:UpdateObject', function()
     QBCore = exports[Bridge.FrameworkName]:GetCoreObject()
     for k, v in pairs(QBCore.Shared.Items) do
         local item = {}
+        if type(v) == 'string' then return end
         if not v.name then v.name = k end
         item.name = v.name
         item.label = v.label
@@ -150,11 +151,15 @@ Framework.GetPlayer = function(source)
     self.Job.Boss = Player.PlayerData.job.isboss
     self.Job.Grade.Name = Player.PlayerData.job.grade.name
     self.Job.Grade.Level = Player.PlayerData.job.grade.level
-    self.Gang.Name = Player.PlayerData.gang.name
-    self.Gang.Label = Player.PlayerData.gang.label
-    self.Gang.Boss = Player.PlayerData.gang.isboss
-    self.Gang.Grade.Name = Player.PlayerData.gang.grade.name
-    self.Gang.Grade.Level = Player.PlayerData.gang.grade.level
+
+    local isGangEnabled = (Player.PlayerData.gang and next(Player.PlayerData.gang))
+    if isGangEnabled then
+        self.Gang.Name = Player.PlayerData.gang.name
+        self.Gang.Label = Player.PlayerData.gang.label
+        self.Gang.Boss = Player.PlayerData.gang.isboss
+        self.Gang.Grade.Name = Player.PlayerData.gang.grade.name
+        self.Gang.Grade.Level = Player.PlayerData.gang.grade.level
+    end
     self.Metadata = Player.PlayerData.metadata
 
     self.SetJob = function(job, grade)

@@ -9,6 +9,7 @@ Framework.OnReady(QBCore, function()
     Framework.Items = {}
     for k, v in pairs(QBCore.Shared.Items) do
         local item = {}
+        if type(v) == 'string' then return end
         if not v.name then v.name = k end
         item.name = v.name
         item.label = v.label
@@ -130,7 +131,6 @@ end
 
 Framework.OpenNearbyInventory = function(playerId)
     TriggerServerEvent("inventory:server:OpenInventory", "otherplayer", playerId)
-    -- return lib.callback.await(Bridge.InventoryName .. ':openInventory', false, playerId)
 end
 
 Framework.GetCurrentWeapon = function() -- qb does not providing current weapon data 
