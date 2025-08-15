@@ -182,32 +182,11 @@ local function RemoveStashItem(inventory, item, count, metadata, slot)
 	end
 end
 
-Framework.OpenStash = function(src, name)
-    name = name:gsub("%-", "_")
-    local stash = stashes[name]
-    if stash then
-        local Player = Framework.GetPlayer(src)
-        if not Player then return end
-    
-        local isAllowed = false
-        if stash.groups and Framework.HasJob(stash.groups, Player) then isAllowed = true end
-        if stash.groups and Framework.HasGang(stash.groups, Player) then isAllowed = true end
-        if type(stash.groups) == "table" and (stash.groups and not isAllowed) then return end
-        if stash.owner and type(stash.owner) == 'string' and Player.Identifier ~= stash.owner then return end
-        if stash.owner and type(stash.owner) == 'boolean' then name = name .. Player.Identifier end
-        
-        tgiann_inventory:OpenInventory(src, "stash", name, {
-            maxweight = stash.weight,
-            slots = stash.slots,
-        })
-    end
-end
-
 Framework.AddItem = function(inventory, item, count, metadata, slot)
     if type(inventory) == "string" then
         return AddStashItem(inventory, item, count, metadata, slot)
     elseif type(inventory) == "number" then
-        if not tgiann_inventory:CanCarryItem(inventory, item, count) then return false end
+        -- if not tgiann_inventory:CanCarryItem(inventory, item, count) then return false end
         return tgiann_inventory:AddItem(inventory, item, count, slot, metadata)
     end
     return false
@@ -427,6 +406,27 @@ Framework.CreateCallback(Bridge.Resource .. ':bridge:GetStash', function(source,
     name = name:gsub("%-", "_")
     cb(stashes[name] and stashes[name] or nil)
 end)
+
+Framework.OpenStash = function(src, name)
+    name = name:gsub("%-", "_")
+    local stash = stashes[name]
+    if stash then
+        local Player = Framework.GetPlayer(src)
+        if not Player then return end
+    
+        local isAllowed = false
+        if stash.groups and Framework.HasJob(stash.groups, Player) then isAllowed = true end
+        if stash.groups and Framework.HasGang(stash.groups, Player) then isAllowed = true end
+        if type(stash.groups) == "table" and (stash.groups and not isAllowed) then return end
+        if stash.owner and type(stash.owner) == 'string' and Player.Identifier ~= stash.owner then return end
+        if stash.owner and type(stash.owner) == 'boolean' then name = name .. Player.Identifier end
+        
+        tgiann_inventory:OpenInventory(src, "stash", name, {
+            maxweight = stash.weight,
+            slots = stash.slots,
+        })
+    end
+end
 
 local shops = {}
 Framework.RegisterShop = function(name, data)
