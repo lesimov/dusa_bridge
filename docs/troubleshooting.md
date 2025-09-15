@@ -76,36 +76,6 @@ override.frameworkname = 'es_extended'
 override.frameworkevent = 'esx:getSharedObject'
 ```
 
-### Database Issues
-
-#### No Compatible Database Found
-
-**Error Message**: `No Compatible Database Resource Found`
-
-**Solutions**:
-
-1. **Install OXMySQL**:
-   ```cfg
-   ensure oxmysql
-   ensure dusa_bridge
-   ```
-
-2. **Override database configuration**:
-   ```lua
-   -- In override.lua
-   override.database = 'oxmysql'
-   override.databasename = 'oxmysql'
-   ```
-
-#### Database Connection Problems
-
-**Symptoms**: Database queries failing, timeout errors
-
-**Solutions**:
-
-1. **Check database configuration**: Verify connection string in oxmysql
-2. **Check database permissions**: Ensure database user has proper permissions
-3. **Test connection**: Use database testing tools
 
 ### Inventory System Issues
 
@@ -256,7 +226,7 @@ override.frameworkevent = 'esx:getSharedObject'
    -- Use canInteract function to reduce checks
    {
        canInteract = function()
-           return GetPlayerData().job.name == 'police'
+           return Framework.Player.Job.Name == 'police'
        end
    }
    ```
@@ -295,7 +265,7 @@ This will show:
 ```lua
 -- Debug player data
 RegisterCommand('debugplayer', function()
-    local playerData = Framework.GetPlayerData()
+    local playerData = Framework.Player
     print('Player data:', json.encode(playerData, {indent = true}))
 end)
 
@@ -304,7 +274,6 @@ RegisterCommand('bridgestatus', function()
     print('Framework:', Bridge.Framework)
     print('Inventory:', Bridge.Inventory)
     print('Target:', Bridge.Target)
-    print('Database:', Bridge.Database)
 end)
 
 -- Debug inventory

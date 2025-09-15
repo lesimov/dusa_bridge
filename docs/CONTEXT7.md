@@ -23,7 +23,6 @@ framework/[system]/[client|server].lua - Framework adapters
 inventory/[system]/[client|server].lua - Inventory system bridges
 target/[system]/[client|server].lua - Target system integrations
 zone/[system]/[client|server].lua - Zone management systems
-database/[system]/[client|server].lua - Database abstraction layers
 ```
 
 ### Shared Components
@@ -167,22 +166,6 @@ bridge_disable 'target'
 override.debug = true
 ```
 
-## Database Integration
-
-### OXMySQL Pattern
-```lua
-Database.Execute(query, params, callback)
-Database.Fetch(query, params, callback)
-Database.FetchAll(query, params, callback)
-```
-
-### Transaction Support
-```lua
-Database.Execute('START TRANSACTION', {}, function()
-    -- Multiple operations
-    Database.Execute('COMMIT', {})
-end)
-```
 
 ## Event System
 
@@ -223,7 +206,7 @@ Hook.Trigger('eventName', data)
 ### Detection Problems
 - Framework not starting before bridge
 - Custom resource names not matching detection patterns
-- Missing dependencies (ox_lib, database)
+- Missing dependencies (ox_lib)
 
 ### Configuration Issues
 - Incorrect override syntax

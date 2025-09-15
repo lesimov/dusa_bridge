@@ -290,7 +290,7 @@ Target.AddBoxZone('custom_shop', vector3(100.0, 200.0, 30.0), 2.0, 2.0, {
             icon = 'fas fa-shopping-bag',
             label = 'Open Shop',
             canInteract = function()
-                local playerJob = Framework.GetPlayerData().job.name
+                local playerJob = Framework.Player.Job.Name
                 local hasKey = Inventory.HasItem('shop_key')
                 return playerJob == 'shopowner' or hasKey
             end

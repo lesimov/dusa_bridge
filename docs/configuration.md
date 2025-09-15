@@ -15,9 +15,6 @@ override.debug = false
 -- Set the locale
 override.locale = 'en'
 
--- Database Configuration
-override.database = 'oxmysql'
-override.databasename = 'oxmysql'
 
 -- Framework Configuration
 override.framework = 'esx'  -- 'esx', 'qb', 'qbox', 'ox', 'vrp', 'ndcore'
@@ -52,7 +49,6 @@ bridge_disable 'framework'  -- Disable framework integration
 bridge_disable 'inventory'  -- Disable inventory integration
 bridge_disable 'target'     -- Disable target integration
 bridge_disable 'zone'       -- Disable zone integration
-bridge_disable 'database'   -- Disable database integration
 bridge_disable 'locale'     -- Disable locale system
 bridge_disable 'sprites'    -- Disable sprite system
 bridge_disable 'menu'       -- Disable menu integration

@@ -21,8 +21,8 @@ Dusa Bridge provides seamless integration with multiple FiveM frameworks through
 ### Usage Example
 ```lua
 -- Get player data
-local xPlayer = Framework.GetPlayerData()
-print('Player job:', xPlayer.job.name)
+local xPlayer = Framework.Player
+print('Player job:', xPlayer.Job.Name)
 
 -- Server-side player management
 local xPlayer = Framework.GetPlayer(source)
@@ -46,8 +46,8 @@ xPlayer.addMoney('bank', 1000)
 ### Usage Example
 ```lua
 -- Get player data
-local PlayerData = Framework.GetPlayerData()
-print('Player citizenid:', PlayerData.citizenid)
+local PlayerData = Framework.Player
+print('Player identifier:', PlayerData.Identifier)
 
 -- Server-side player management
 local Player = Framework.GetPlayer(source)
@@ -69,7 +69,7 @@ Player.Functions.AddMoney('bank', 1000)
 ### Usage Example
 ```lua
 -- Get player data
-local PlayerData = Framework.GetPlayerData()
+local PlayerData = Framework.Player
 print('Player source:', PlayerData.source)
 
 -- Server-side operations
@@ -92,7 +92,7 @@ player.addMoney('cash', 500)
 ### Usage Example
 ```lua
 -- Get player data
-local player = Framework.GetPlayerData()
+local player = Framework.Player
 print('Player name:', player.get('firstName'))
 
 -- Server-side operations
@@ -135,7 +135,7 @@ Framework.AddMoney(user_id, 1000)
 ### Usage Example
 ```lua
 -- Get player data
-local player = Framework.GetPlayerData()
+local player = Framework.Player
 print('Character ID:', player.character.id)
 ```
 
@@ -147,8 +147,8 @@ The bridge provides a consistent API regardless of the underlying framework:
 
 ```lua
 -- Client-side
-local playerData = Framework.GetPlayerData()
-local job = playerData.job or playerData.job or playerData.groups
+local playerData = Framework.Player
+local job = playerData.Job or playerData.job or playerData.groups
 
 -- Server-side
 local player = Framework.GetPlayer(source)
@@ -189,7 +189,7 @@ local identifier = Framework.GetIdentifier(source)
 
 -- Works across all frameworks:
 -- ESX: steam:110000XXXXX or license:XXXXX
--- QBCore: citizenid
+-- QBCore: Identifier
 -- OX: character ID
 ```
 

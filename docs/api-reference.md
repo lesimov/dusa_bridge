@@ -14,7 +14,6 @@ local context = Bridge.Context  -- 'client' or 'server'
 local framework = Bridge.Framework
 local inventory = Bridge.Inventory
 local target = Bridge.Target
-local database = Bridge.Database
 ```
 
 ### Framework API
@@ -24,23 +23,13 @@ local database = Bridge.Database
 local framework = Framework
 
 -- Common framework methods (varies by framework)
-Framework.GetPlayerData()           -- Get player data
+Framework.Player                    -- Get player data table
 Framework.GetPlayers()              -- Get all players (server)
 Framework.GetPlayer(source)         -- Get specific player (server)
 Framework.RegisterCallback()        -- Register server callback
 Framework.TriggerCallback()         -- Trigger callback
 ```
 
-### Database API
-
-```lua
--- Database operations
-Database.Execute(query, params, callback)    -- Execute query
-Database.Fetch(query, params, callback)      -- Fetch single result
-Database.FetchAll(query, params, callback)   -- Fetch multiple results
-Database.Insert(query, params, callback)     -- Insert data
-Database.Update(query, params, callback)     -- Update data
-```
 
 ### Inventory API
 

@@ -240,9 +240,9 @@ end
 local conditionalZone = Zone.CreateBox(coords, size, 0.0, {
     name = 'police_station',
     onEnter = function(self)
-        local playerData = Framework.GetPlayerData()
+        local playerData = Framework.Player
 
-        if playerData.job.name == 'police' then
+        if playerData.Job.Name == 'police' then
             TriggerEvent('police:enterStation')
             Framework.Notify('Welcome back, officer!', 'success')
         else
@@ -251,9 +251,9 @@ local conditionalZone = Zone.CreateBox(coords, size, 0.0, {
         end
     end,
     inside = function(self)
-        local playerData = Framework.GetPlayerData()
+        local playerData = Framework.Player
 
-        if playerData.job.name == 'police' then
+        if playerData.Job.Name == 'police' then
             -- Police-specific actions
             DrawText3D(self.coords, '[E] Access Police Computer')
 
@@ -435,8 +435,8 @@ function BusinessZones.CreateBusiness(businessData)
         Zone.CreateBox(employeeArea.coords, employeeArea.size, 0.0, {
             name = 'employee_' .. businessData.id .. '_' .. employeeArea.name,
             onEnter = function(self)
-                local playerData = Framework.GetPlayerData()
-                if playerData.job.name == businessData.jobName then
+                local playerData = Framework.Player
+                if playerData.Job.Name == businessData.jobName then
                     TriggerEvent('business:enterEmployeeArea', businessData.id, employeeArea.name)
                 end
             end

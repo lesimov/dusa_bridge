@@ -2,7 +2,7 @@
 
 ## Overview
 
-Dusa Bridge is a comprehensive compatibility layer for FiveM resources that provides seamless integration across multiple frameworks, inventory systems, target systems, zone managers, and databases. It automatically detects and bridges differences between various popular FiveM resources.
+Dusa Bridge is a comprehensive compatibility layer for FiveM resources that provides seamless integration across multiple frameworks, inventory systems, target systems, and zone managers. It automatically detects and bridges differences between various popular FiveM resources.
 
 ## Version
 Current Version: **0.7.8-release**
@@ -13,7 +13,6 @@ Current Version: **0.7.8-release**
 - **Multi-Inventory Support**: OX Inventory, QB-Inventory variants, QS-Inventory, Core Inventory, TGiann Inventory
 - **Target System Integration**: OX Target, QB-Target, QTarget, Meta Target
 - **Zone Management**: OX Lib zones, PolyZone
-- **Database Abstraction**: OXMySQL support with extensible database layer
 - **Menu System Integration**: OX Lib menus, QB-Menu
 - **Automatic Detection**: Automatically detects and configures supported resources
 - **Override System**: Manual configuration options for custom setups
@@ -35,7 +34,6 @@ Current Version: **0.7.8-release**
 - [Inventory Systems](inventory-systems.md)
 - [Target Systems](target-systems.md)
 - [Zone Management](zone-management.md)
-- [Database Layer](database-layer.md)
 - [API Reference](api-reference.md)
 - [Examples](examples.md)
 - [Troubleshooting](troubleshooting.md)

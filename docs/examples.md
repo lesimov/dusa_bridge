@@ -106,105 +106,6 @@ RegisterNetEvent('shop:purchaseItem', function(itemName, price)
 end)
 ```
 
-## Advanced Banking System
-
-### Multi-Framework Banking
-
-```lua
--- server/banking.lua
-
-local BankingSystem = {}
-
--- Account creation
-function BankingSystem.CreateAccount(source, accountType)
-    local player = Framework.GetPlayer(source)
-    local identifier = Framework.GetIdentifier(source)
-
-    local accountNumber = GenerateAccountNumber()
-
-    Database.Execute('INSERT INTO bank_accounts (identifier, account_number, account_type, balance) VALUES (?, ?, ?, ?)',
-        {identifier, accountNumber, accountType, 0}, function(result)
-            if result.affectedRows > 0 then
-                Framework.Notify(source, 'Bank account created successfully', 'success')
-                TriggerClientEvent('banking:updateAccount', source, {
-                    accountNumber = accountNumber,
-                    balance = 0,
-                    type = accountType
-                })
-            end
-        end)
-end
-
--- Money transfer
-function BankingSystem.Transfer(source, fromAccount, toAccount, amount)
-    local identifier = Framework.GetIdentifier(source)
-
-    -- Check if sender owns the account
-    Database.Fetch('SELECT * FROM bank_accounts WHERE account_number = ? AND identifier = ?',
-        {fromAccount, identifier}, function(senderAccount)
-            if not senderAccount then
-                Framework.Notify(source, 'Invalid account', 'error')
-                return
-            end
-
-            if senderAccount.balance < amount then
-                Framework.Notify(source, 'Insufficient funds', 'error')
-                return
-            end
-
-            -- Check if target account exists
-            Database.Fetch('SELECT * FROM bank_accounts WHERE account_number = ?',
-                {toAccount}, function(targetAccount)
-                    if not targetAccount then
-                        Framework.Notify(source, 'Target account not found', 'error')
-                        return
-                    end
-
-                    -- Perform transfer
-                    Database.Execute('UPDATE bank_accounts SET balance = balance - ? WHERE account_number = ?',
-                        {amount, fromAccount})
-                    Database.Execute('UPDATE bank_accounts SET balance = balance + ? WHERE account_number = ?',
-                        {amount, toAccount})
-
-                    -- Log transaction
-                    LogTransaction(fromAccount, toAccount, amount, 'transfer')
-
-                    Framework.Notify(source, 'Transfer completed successfully', 'success')
-                end)
-        end)
-end
-
--- Register callbacks
-Framework.RegisterCallback('banking:getAccounts', function(source, cb)
-    local identifier = Framework.GetIdentifier(source)
-
-    Database.FetchAll('SELECT * FROM bank_accounts WHERE identifier = ?',
-        {identifier}, function(accounts)
-            cb(accounts)
-        end)
-end)
-
-Framework.RegisterCallback('banking:getTransactions', function(source, cb, accountNumber)
-    Database.FetchAll('SELECT * FROM bank_transactions WHERE from_account = ? OR to_account = ? ORDER BY created_at DESC LIMIT 50',
-        {accountNumber, accountNumber}, function(transactions)
-            cb(transactions)
-        end)
-end)
-
--- Utility functions
-function GenerateAccountNumber()
-    return 'ACC' .. math.random(100000, 999999)
-end
-
-function LogTransaction(fromAccount, toAccount, amount, type)
-    Database.Execute('INSERT INTO bank_transactions (from_account, to_account, amount, transaction_type, created_at) VALUES (?, ?, ?, ?, ?)',
-        {fromAccount, toAccount, amount, type, os.date('%Y-%m-%d %H:%M:%S')})
-end
-
--- Export functions
-exports('CreateAccount', BankingSystem.CreateAccount)
-exports('Transfer', BankingSystem.Transfer)
-```
 
 ## Vehicle Management System
 
@@ -388,9 +289,9 @@ local PoliceJob = {}
 
 -- Police menu
 function PoliceJob.OpenPoliceMenu()
-    local playerData = Framework.GetPlayerData()
+    local playerData = Framework.Player
 
-    if playerData.job.name ~= 'police' then
+    if playerData.Job.Name ~= 'police' then
         Framework.Notify('You are not a police officer', 'error')
         return
     end
@@ -414,7 +315,7 @@ function PoliceJob.OpenPoliceMenu()
     }
 
     -- Add supervisor options
-    if playerData.job.grade >= 3 then
+    if playerData.Job.Grade.Level >= 3 then
         table.insert(menuItems, {
             title = 'Manage Officers',
             description = 'Manage police officers',
@@ -484,9 +385,9 @@ RegisterNetEvent('police:checkID', function()
 end)
 
 RegisterNetEvent('police:showID', function(targetData)
-    local playerData = Framework.GetPlayerData()
+    local playerData = Framework.Player
 
-    if playerData.job.name == 'police' then
+    if playerData.Job.Name == 'police' then
         Menu.Show({
             title = 'Player ID',
             items = {
@@ -496,7 +397,7 @@ RegisterNetEvent('police:showID', function(targetData)
                 },
                 {
                     title = 'ID',
-                    description = targetData.citizenid or targetData.identifier
+                    description = targetData.Identifier or targetData.identifier
                 },
                 {
                     title = 'Job',
@@ -602,7 +503,7 @@ RegisterNetEvent('properties:manageProperty', function(data)
     }
 
     -- Add management options for owner
-    if property.owner == Framework.GetPlayerData().citizenid then
+    if property.owner == Framework.Player.Identifier then
         table.insert(menuItems, {
             title = 'Give Keys',
             description = 'Give keys to nearby player',

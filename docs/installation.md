@@ -7,7 +7,6 @@ Before installing Dusa Bridge, ensure you have:
 1. A FiveM server running
 2. One of the supported frameworks installed and running
 3. OX Lib installed (recommended for full functionality)
-4. A supported database resource (OXMySQL recommended)
 
 ## Installation Steps
 
@@ -22,9 +21,6 @@ Before installing Dusa Bridge, ensure you have:
 Add the following to your `server.cfg`:
 
 ```cfg
-# Database (start before bridge)
-ensure oxmysql
-
 # Framework (start before bridge)
 ensure es_extended  # or your chosen framework
 
@@ -51,6 +47,11 @@ dependency 'dusa_bridge'
 
 -- Bridge metadata (required)
 bridge 'dusa_bridge'
+
+-- Bridge integration (required)
+shared_scripts {
+    '@dusa_bridge/bridge.lua'
+}
 
 -- Your resource files
 client_scripts {
@@ -96,14 +97,6 @@ Check your server console for:
 2. Check that your framework resource name matches supported names
 3. Use override configuration if using custom framework names
 
-### Database Not Found
-
-**Error**: `No Compatible Database Resource Found`
-
-**Solutions**:
-1. Install and start OXMySQL before dusa_bridge
-2. Configure database override in `override.lua`
-3. Ensure database resource is properly configured
 
 ## Post-Installation
 
