@@ -10,9 +10,8 @@ override = {}
 ----------------------------------------------------------------------------------------------------------------
 --- IF YOU WANT TO OVERRIDE SOMETHING, YOU CAN DO IT HERE. JUST REMOVE THE -- FROM THE LINE YOU WANT TO OVERRIDE
 ----------------------------------------------------------------------------------------------------------------
-
 -- Enable or disable debug mode
--- override.debug = false
+-- override.debug = true
 
 -- Set the locale
 -- override.locale = 'en'

@@ -452,69 +452,69 @@ end
 
 Citizen.CreateThreadNow(function()
     ESX.Gangs = {}
-    local success, result = pcall(Database.scalar, 'SELECT 1 FROM gangs')
-    if not success then
-        Database.query([[CREATE TABLE IF NOT EXISTS `gangs` (
-	        `name` varchar(50) NOT NULL,
-            `label` varchar(50) DEFAULT NULL,
-            PRIMARY KEY (`name`)
-        )]])
-    end
+    -- local success, result = pcall(Database.scalar, 'SELECT 1 FROM gangs')
+    -- if not success then
+    --     Database.query([[CREATE TABLE IF NOT EXISTS `gangs` (
+	--         `name` varchar(50) NOT NULL,
+    --         `label` varchar(50) DEFAULT NULL,
+    --         PRIMARY KEY (`name`)
+    --     )]])
+    -- end
 
-    local success, result = pcall(Database.scalar, 'SELECT 1 FROM gang_grades')
-    if not success then
-        Database.query([[CREATE TABLE IF NOT EXISTS `gang_grades` (
-	        `id` int(11) NOT NULL,
-            `gang_name` varchar(50) DEFAULT NULL,
-            `grade` int(11) NOT NULL,
-            `name` varchar(50) NOT NULL,
-            `label` varchar(50) NOT NULL,
-            PRIMARY KEY (`id`)
-        )]])
-    end
+    -- local success, result = pcall(Database.scalar, 'SELECT 1 FROM gang_grades')
+    -- if not success then
+    --     Database.query([[CREATE TABLE IF NOT EXISTS `gang_grades` (
+	--         `id` int(11) NOT NULL,
+    --         `gang_name` varchar(50) DEFAULT NULL,
+    --         `grade` int(11) NOT NULL,
+    --         `name` varchar(50) NOT NULL,
+    --         `label` varchar(50) NOT NULL,
+    --         PRIMARY KEY (`id`)
+    --     )]])
+    -- end
 
-    local success, result = pcall(Database.scalar, 'SELECT gang FROM users')
-    if not success then
-        Database.query("ALTER TABLE `users` ADD COLUMN `gang` varchar(20) DEFAULT 'none' AFTER job_grade")
-    end
+    -- local success, result = pcall(Database.scalar, 'SELECT gang FROM users')
+    -- if not success then
+    --     Database.query("ALTER TABLE `users` ADD COLUMN `gang` varchar(20) DEFAULT 'none' AFTER job_grade")
+    -- end
 
-    local success, result = pcall(Database.scalar, 'SELECT gang_grade FROM users')
-    if not success then
-        Database.query('ALTER TABLE `users` ADD COLUMN `gang_grade` int(11) DEFAULT 0 AFTER gang')
-    end
+    -- local success, result = pcall(Database.scalar, 'SELECT gang_grade FROM users')
+    -- if not success then
+    --     Database.query('ALTER TABLE `users` ADD COLUMN `gang_grade` int(11) DEFAULT 0 AFTER gang')
+    -- end
 
-    local success, gangs = pcall(Database.query, 'SELECT * FROM gangs')
-    if success then
-        for _, v in ipairs(gangs) do
-            ESX.Gangs[v.name] = v
-            ESX.Gangs[v.name].grades = {}
-        end
-    end
+    -- local success, gangs = pcall(Database.query, 'SELECT * FROM gangs')
+    -- if success then
+    --     for _, v in ipairs(gangs) do
+    --         ESX.Gangs[v.name] = v
+    --         ESX.Gangs[v.name].grades = {}
+    --     end
+    -- end
 
-    local success, gang_grades = pcall(Database.query, 'SELECT * FROM gang_grades')
-    if success then
-        for _, v in ipairs(gang_grades) do
-            if ESX.Gangs[v.gang_name] then
-                ESX.Gangs[v.gang_name].grades[tostring(v.grade)] = v
-            else
-                if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang grades for ^5"%s"^0 due to missing gang')
-                    :format(v.gang_name)) end
-            end
-        end
-    end
+    -- local success, gang_grades = pcall(Database.query, 'SELECT * FROM gang_grades')
+    -- if success then
+    --     for _, v in ipairs(gang_grades) do
+    --         if ESX.Gangs[v.gang_name] then
+    --             ESX.Gangs[v.gang_name].grades[tostring(v.grade)] = v
+    --         else
+    --             if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang grades for ^5"%s"^0 due to missing gang')
+    --                 :format(v.gang_name)) end
+    --         end
+    --     end
+    -- end
 
-    for _, v in pairs(ESX.Gangs) do
-        if next(v.grades) == nil then
-            ESX.Gangs[v.name] = nil
-            if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang ^5"%s"^0 due to no gang grades found'):format(v
-                .name)) end
-        end
-    end
+    -- for _, v in pairs(ESX.Gangs) do
+    --     if next(v.grades) == nil then
+    --         ESX.Gangs[v.name] = nil
+    --         if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang ^5"%s"^0 due to no gang grades found'):format(v
+    --             .name)) end
+    --     end
+    -- end
 
-    ESX.Gangs['none'] = {
-        label = 'No Gang Affiliaton',
-        grades = { ['0'] = { grade = 0, label = 'None' } }
-    }
+    -- ESX.Gangs['none'] = {
+    --     label = 'No Gang Affiliaton',
+    --     grades = { ['0'] = { grade = 0, label = 'None' } }
+    -- }
 
     local success, result = pcall(Database.scalar, 'SELECT metadata FROM users')
     if not success then

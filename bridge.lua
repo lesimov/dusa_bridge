@@ -434,6 +434,12 @@ if not Bridge.Disabled['menu'] then
     module(('menu/%s/%s'):format(Bridge.Menu, Bridge.Context))
 end
 
+-- ❕ TELEMETRY ❕
+-- NOTE: Telemetry is now loaded directly via fxmanifest.lua (shared_scripts, server_scripts, client_scripts)
+-- This ensures proper loading order and avoids issues with module() in external resource contexts
+-- The telemetry system is only available within dusa_bridge itself
+-- Other resources should use exports: exports.dusa_bridge:registerTelemetry(), exports.dusa_bridge:reportError(), etc.
+
 -- -- ❕ LOAD INTERACTION ❕
 -- if not Bridge.Disabled['interaction'] and Bridge.Context == 'client' then
 --     print('[^2BRIDGE^0] ^1Interaction^0 Loading')
