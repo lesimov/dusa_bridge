@@ -434,6 +434,11 @@ if not Bridge.Disabled['menu'] then
     module(('menu/%s/%s'):format(Bridge.Menu, Bridge.Context))
 end
 
+-- ❕ TEXTUI ❕
+-- NOTE: TextUI is now loaded directly via fxmanifest.lua (client_scripts)
+-- This ensures exports are registered before other resources try to use them
+-- Other resources should use exports: exports.dusa_bridge:ShowTextUI(), exports.dusa_bridge:HideTextUI(), etc.
+
 -- ❕ TELEMETRY ❕
 -- NOTE: Telemetry is now loaded directly via fxmanifest.lua (shared_scripts, server_scripts, client_scripts)
 -- This ensures proper loading order and avoids issues with module() in external resource contexts

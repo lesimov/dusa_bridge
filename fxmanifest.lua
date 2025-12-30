@@ -5,7 +5,7 @@ lua54 'yes'
 game 'gta5'
 
 author 'Dusa'
-version '0.8.0'
+version '0.8.1'
 description 'Dusa Bridge'
 
 shared_scripts {
@@ -16,7 +16,7 @@ shared_scripts {
     'telemetry/shared/breadcrumb.lua',
 }
 
--- ui_page 'interaction/web/index.html'
+ui_page 'web/index.html'
 
 server_scripts {
     -- Telemetry server modules
@@ -36,6 +36,8 @@ client_scripts {
     'telemetry/client/capture.lua',
     'telemetry/client/nui_bridge.lua',
     'telemetry/client/init.lua',
+    -- TextUI module (exports)
+    'textui/client.lua',
 }
 
 files {
@@ -58,6 +60,10 @@ files {
     'telemetry/client/capture.lua',
     'telemetry/client/nui_bridge.lua',
     'telemetry/nui/*.ts',
+    -- TextUI module
+    'textui/client.lua',
+    -- TextUI NUI
+    'web/index.html',
     -- 'interaction/client/*.lua',
     -- 'interaction/client/modules/*.lua',
 }

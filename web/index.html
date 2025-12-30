@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dusa Bridge - TextUI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        #root {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* InteractionPrompt Styles */
+        .interaction-prompt {
+            position: fixed;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 183px;
+            height: 42px;
+            padding: 4px 0.75rem 4px 4px;
+            background: #1a1b22;
+            border-radius: 8px;
+            box-shadow: 0px 0px 4px 0px #54ffac;
+            transition: all 0.3s ease;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+
+        .interaction-prompt.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .interaction-prompt.active {
+            background: #54ffac;
+            box-shadow: 0px 0px 8px 0px #54ffac;
+        }
+
+        /* Position variants */
+        .interaction-prompt.left-center {
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%) translateX(-100px);
+        }
+
+        .interaction-prompt.left-center.visible {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .interaction-prompt.right-center {
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%) translateX(100px);
+        }
+
+        .interaction-prompt.right-center.visible {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .interaction-prompt.top-center {
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+        }
+
+        .interaction-prompt.top-center.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .interaction-prompt.bottom-center {
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+        }
+
+        .interaction-prompt.bottom-center.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .key-button {
+            min-width: 33px;
+            height: 33px;
+            padding: 0 8px;
+            background: #21232c;
+            border-radius: 4.936px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            grid-column: 1;
+            transition: background 0.3s ease;
+        }
+
+        .interaction-prompt.active .key-button {
+            background: #81f7be;
+        }
+
+        .key-text {
+            font-family: 'Barlow', sans-serif;
+            font-weight: 700;
+            font-size: 19.745px;
+            color: #54ffac;
+            text-align: center;
+            line-height: 1;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .interaction-prompt.active .key-text {
+            color: #1a1b22;
+        }
+
+        .prompt-text {
+            font-family: 'Barlow', sans-serif;
+            font-weight: 400;
+            font-size: 16px;
+            color: #54ffac;
+            text-align: center;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.3s ease;
+            grid-column: 2;
+        }
+
+        .interaction-prompt.active .prompt-text {
+            color: #1a1b22;
+        }
+
+        .icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            grid-column: 3;
+            color: #54ffac;
+            transition: color 0.3s ease;
+        }
+
+        .interaction-prompt.active .icon-container {
+            color: #1a1b22;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <!-- InteractionPrompt -->
+        <div id="interactionPrompt" class="interaction-prompt left-center hidden">
+            <div class="key-button">
+                <span class="key-text" id="promptKey">E</span>
+            </div>
+            <p class="prompt-text" id="promptText">Interact</p>
+            <div class="icon-container">
+                <!-- Simple warehouse icon using SVG -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                    <path d="M12 9v4"/>
+                    <path d="M12 17h.01"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NUI Message Handler
+        const interactionPrompt = document.getElementById('interactionPrompt');
+        const promptKey = document.getElementById('promptKey');
+        const promptText = document.getElementById('promptText');
+
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+
+            switch(data.action) {
+                case 'showInteractionPrompt':
+                    showInteractionPrompt(data.data);
+                    break;
+                case 'hideInteractionPrompt':
+                    hideInteractionPrompt();
+                    break;
+                case 'toggleInteractionPromptActive':
+                    toggleActive();
+                    break;
+                case 'updateInteractionPromptText':
+                    updateText(data.data.text);
+                    break;
+                case 'updateInteractionPromptPosition':
+                    updatePosition(data.data.position);
+                    break;
+            }
+        });
+
+        function showInteractionPrompt(data) {
+            // Update text and key
+            promptText.textContent = data.text || 'Interact';
+            promptKey.textContent = data.key || 'E';
+
+            // Update position class
+            interactionPrompt.className = 'interaction-prompt ' + (data.position || 'left-center');
+
+            // Show with animation
+            interactionPrompt.classList.remove('hidden');
+            setTimeout(() => {
+                interactionPrompt.classList.add('visible');
+            }, 10);
+
+            // Set active state if provided
+            if (data.active) {
+                interactionPrompt.classList.add('active');
+            }
+        }
+
+        function hideInteractionPrompt() {
+            interactionPrompt.classList.remove('visible');
+            setTimeout(() => {
+                interactionPrompt.classList.add('hidden');
+                interactionPrompt.classList.remove('active');
+            }, 300);
+        }
+
+        function toggleActive() {
+            interactionPrompt.classList.add('active');
+
+            // Auto-hide after animation
+            setTimeout(() => {
+                hideInteractionPrompt();
+            }, 200);
+        }
+
+        function updateText(text) {
+            promptText.textContent = text || 'Interact';
+        }
+
+        function updatePosition(position) {
+            // Remove all position classes
+            interactionPrompt.classList.remove('left-center', 'right-center', 'top-center', 'bottom-center');
+            // Add new position
+            interactionPrompt.classList.add(position || 'left-center');
+        }
+    </script>
+</body>
+</html>
