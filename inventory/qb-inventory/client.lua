@@ -27,14 +27,22 @@ Framework.OpenStash = function(name)
     name = name:gsub("%-", "_")
     Framework.TriggerCallback(Bridge.Resource .. ':bridge:GetStash', function(stash)
         if not stash then return end
+
         local isAllowed = false
-        if stash.groups and Framework.HasJob(stash.groups, Framework.Player) then isAllowed = true end
-        if stash.groups and Framework.HasGang(stash.groups, Framework.Player) then isAllowed = true end
-        if stash.groups and not isAllowed then return end
+        if stash.groups then
+            if Framework.HasJob(stash.groups, Framework.Player) then isAllowed = true end
+            if Framework.HasGang(stash.groups, Framework.Player) then isAllowed = true end
+            if not isAllowed then return end
+        else
+            isAllowed = true
+        end
+
         if stash.owner and type(stash.owner) == 'string' and Framework.Player.Identifier ~= stash.owner then return end
-        if stash.owner and type(stash.owner) == 'boolean' then name = name .. Framework.Player.Identifier end
-        TriggerServerEvent('inventory:server:OpenInventory', 'stash', name, { maxweight = stash.weight, slots = stash.slots })
-        TriggerEvent('inventory:client:SetCurrentStash', name)
+        if stash.owner and type(stash.owner) == 'boolean' then
+            name = name .. Framework.Player.Identifier
+        end
+
+        TriggerServerEvent(Bridge.Resource .. ':bridge:openStash', name, stash.weight, stash.slots)
     end, name)
 end
 

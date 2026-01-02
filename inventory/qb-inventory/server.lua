@@ -27,9 +27,8 @@ end)
 ---Get Stash Items
 ---@return Item[]
 local function GetStashItems(inventory)
-    inventory = inventory:gsub("%-", "_")
     local items = {}
-	local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
+	local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {inventory})
 	if not result then return items end
 
 	local stashItems = json.decode(result)
@@ -64,10 +63,9 @@ end
 ---@param slot? number
 ---@return boolean
 local function AddStashItem(inventory, item, count, metadata, slot)
-    inventory = inventory:gsub("%-", "_")
     count = tonumber(count) or 1
     local stash = {}
-    local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
+    local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {inventory})
     if result then stash = json.decode(result) end
 	local itemInfo = QBCore.Shared.Items[item:lower()]
     metadata = metadata or {}
@@ -111,8 +109,8 @@ local function AddStashItem(inventory, item, count, metadata, slot)
 			slot = slot,
         }
     end
-    Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-		['stash'] = inventory,
+    Database.insert('INSERT INTO inventories (identifier, items) VALUES (:identifier, :items) ON DUPLICATE KEY UPDATE items = :items', {
+		['identifier'] = inventory,
 		['items'] = json.encode(stash)
 	})
     return true
@@ -126,9 +124,8 @@ end
 ---@param slot? number
 ---@return boolean
 local function RemoveStashItem(inventory, item, count, metadata, slot)
-    inventory = inventory:gsub("%-", "_")
     local stash = {}
-    local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
+    local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {inventory})
     if result then stash = json.decode(result) else return false end
     count = tonumber(count) or 1
 	if type(slot) == "number" and stash[slot] and stash[slot].name == item then
@@ -138,8 +135,8 @@ local function RemoveStashItem(inventory, item, count, metadata, slot)
         else
             stash[slot] = nil
         end
-        Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-            ['stash'] = inventory,
+        Database.insert('INSERT INTO inventories (identifier, items) VALUES (:identifier, :items) ON DUPLICATE KEY UPDATE items = :items', {
+            ['identifier'] = inventory,
             ['items'] = json.encode(stash)
         })
         return true
@@ -148,7 +145,7 @@ local function RemoveStashItem(inventory, item, count, metadata, slot)
         local newstash = stash
         for _, v in pairs(stash) do
             if v.name == item then
-                if metadata and table.matches(metadata, v.info) then 
+                if metadata and table.matches(metadata, v.info) then
                     if removed >= v.amount then
                         newstash[v.slot] = nil
                         removed = removed - v.amount
@@ -166,15 +163,15 @@ local function RemoveStashItem(inventory, item, count, metadata, slot)
                     end
                 end
             end
-            
+
             if removed == 0 then
                 break
             end
         end
 
         if removed == 0 then
-            Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-                ['stash'] = inventory,
+            Database.insert('INSERT INTO inventories (identifier, items) VALUES (:identifier, :items) ON DUPLICATE KEY UPDATE items = :items', {
+                ['identifier'] = inventory,
                 ['items'] = json.encode(newstash)
             })
             return true
@@ -354,8 +351,7 @@ end
 
 Framework.GetItemMetadata = function(inventory, slot)
     if type(inventory) == "string" then
-        inventory = inventory:gsub("%-", "_")
-        local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
+        local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {inventory})
         if not result then return nil end
         local stash = json.decode(result)
         for k, item in pairs(stash) do
@@ -373,8 +369,7 @@ end
 
 Framework.SetItemMetadata = function(inventory, slot, metadata)
     if type(inventory) == "string" then
-        inventory = inventory:gsub("%-", "_")
-        local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', {inventory})
+        local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {inventory})
         if not result then return end
         local stash = json.decode(result)
         for k, item in pairs(stash) do
@@ -384,8 +379,8 @@ Framework.SetItemMetadata = function(inventory, slot, metadata)
             end
         end
         if not next(stash) then return end
-        Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-            ['stash'] = inventory,
+        Database.insert('INSERT INTO inventories (identifier, items) VALUES (:identifier, :items) ON DUPLICATE KEY UPDATE items = :items', {
+            ['identifier'] = inventory,
             ['items'] = json.encode(stash)
         })
     elseif type(inventory) == "number" then
@@ -424,10 +419,9 @@ end
 
 Framework.ClearInventory = function(inventory, keep)
     if type(inventory) == "string" then
-        inventory = inventory:gsub("%-", "_")
         local stash = {}
         if keep then
-            local result = Database.scalar('SELECT items FROM stashitems WHERE stash = ?', { inventory })
+            local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', { inventory })
             if not result then return end
             
             local stashItems = json.decode(result)
@@ -451,8 +445,8 @@ Framework.ClearInventory = function(inventory, keep)
             end
         end
 
-        Database.insert('INSERT INTO stashitems (stash, items) VALUES (:stash, :items) ON DUPLICATE KEY UPDATE items = :items', {
-            ['stash'] = inventory,
+        Database.insert('INSERT INTO inventories (identifier, items) VALUES (:identifier, :items) ON DUPLICATE KEY UPDATE items = :items', {
+            ['identifier'] = inventory,
             ['items'] = json.encode(stash)
         })
     elseif type(inventory) == "number" then
@@ -515,4 +509,57 @@ end
 
 Framework.GetCurrentWeapon = function (inventory)
     return nil
+end
+
+-- Server event to open stash from client
+RegisterNetEvent(Bridge.Resource .. ':bridge:openStash', function(name, maxweight, slots)
+    local src = source
+    local Player = Framework.GetPlayer(src)
+    if not Player then return end
+
+    local QBPlayer = QBCore.Functions.GetPlayer(src)
+    if not QBPlayer then return end
+
+    local playerItems = QBPlayer.PlayerData.items
+    local stashItems = {}
+    local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {name})
+    if result then
+        stashItems = json.decode(result) or {}
+    end
+
+    local formattedInventory = {
+        name = name,
+        label = name,
+        maxweight = maxweight,
+        slots = slots,
+        inventory = stashItems
+    }
+
+    TriggerClientEvent('qb-inventory:client:openInventory', src, playerItems, formattedInventory)
+end)
+
+Framework.OpenStash = function(source, name)
+    name = name:gsub("%-", "_")
+    local stash = stashes[name]
+    if not stash then return end
+
+    local Player = Framework.GetPlayer(source)
+    if not Player then return end
+
+    local isAllowed = false
+    if stash.groups then
+        if Framework.HasJob(stash.groups, Player) then isAllowed = true end
+        if Framework.HasGang(stash.groups, Player) then isAllowed = true end
+        if not isAllowed then return end
+    else
+        isAllowed = true
+    end
+
+    local stashName = name
+    if stash.owner and type(stash.owner) == 'boolean' and stash.owner == true then
+        stashName = name .. Player.Identifier
+    end
+
+    TriggerClientEvent('inventory:client:SetCurrentStash', source, stashName)
+    TriggerClientEvent('qb-inventory:client:openInventory', source, nil, 'stash', stashName, { maxweight = stash.weight, slots = stash.slots })
 end
