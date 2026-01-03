@@ -248,6 +248,10 @@ Framework.GetJob = function(job)
     return job and QBCore.Shared.Jobs[job] or false
 end
 
+Framework.GetJobs = function()
+    return QBCore.Shared.Jobs
+end
+
 Framework.DoesGangExist = function(gang, grade)
     grade = tostring(grade)
     if gang and grade then

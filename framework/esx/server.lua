@@ -350,6 +350,11 @@ Framework.GetJob = function(job)
     end
     return data
 end
+
+Framework.GetJobs = function()
+    return ESX.GetJobs()
+end
+
 Framework.DoesGangExist = function(gang, grade)
     grade = tostring(grade)
     if gang and grade then

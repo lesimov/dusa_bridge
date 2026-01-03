@@ -209,8 +209,13 @@ Framework.DoesJobExist = function(job, grade)
     end
     return false
 end
+
 Framework.GetJob = function(job)
     return exports.qbx_core:GetJob(job)
+end
+
+Framework.GetJobs = function()
+    return exports.qbx_core:GetJobs()
 end
 
 Framework.DoesGangExist = function(gang, grade)
