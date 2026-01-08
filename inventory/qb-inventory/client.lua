@@ -23,6 +23,8 @@ Framework.OnReady(QBCore, function()
     end
 end)
 
+-- This event is no longer needed for qb-inventory as we call OpenInventory export directly on server
+
 Framework.OpenStash = function(name)
     name = name:gsub("%-", "_")
     Framework.TriggerCallback(Bridge.Resource .. ':bridge:GetStash', function(stash)

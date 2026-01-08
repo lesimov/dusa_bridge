@@ -511,32 +511,7 @@ Framework.GetCurrentWeapon = function (inventory)
     return nil
 end
 
--- Server event to open stash from client
-RegisterNetEvent(Bridge.Resource .. ':bridge:openStash', function(name, maxweight, slots)
-    local src = source
-    local Player = Framework.GetPlayer(src)
-    if not Player then return end
-
-    local QBPlayer = QBCore.Functions.GetPlayer(src)
-    if not QBPlayer then return end
-
-    local playerItems = QBPlayer.PlayerData.items
-    local stashItems = {}
-    local result = Database.scalar('SELECT items FROM inventories WHERE identifier = ?', {name})
-    if result then
-        stashItems = json.decode(result) or {}
-    end
-
-    local formattedInventory = {
-        name = name,
-        label = name,
-        maxweight = maxweight,
-        slots = slots,
-        inventory = stashItems
-    }
-
-    TriggerClientEvent('qb-inventory:client:openInventory', src, playerItems, formattedInventory)
-end)
+-- Old bridge event removed - now we call OpenInventory export directly in Framework.OpenStash
 
 Framework.OpenStash = function(source, name)
     name = name:gsub("%-", "_")
@@ -560,6 +535,16 @@ Framework.OpenStash = function(source, name)
         stashName = name .. Player.Identifier
     end
 
-    TriggerClientEvent('inventory:client:SetCurrentStash', source, stashName)
-    TriggerClientEvent('qb-inventory:client:openInventory', source, nil, 'stash', stashName, { maxweight = stash.weight, slots = stash.slots })
+    -- Ensure weight and slots are numbers for qb-inventory
+    local maxweight = tonumber(stash.weight) or 1000000
+    local slots = tonumber(stash.slots) or 50
+
+    -- Use qb-inventory's native OpenInventory export directly
+    local data = {
+        label = stashName,
+        maxweight = maxweight,
+        slots = slots
+    }
+
+    exports['qb-inventory']:OpenInventory(source, stashName, data)
 end
