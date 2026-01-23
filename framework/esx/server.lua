@@ -7,6 +7,9 @@ module 'shared/player'
 ESX = nil
 Version = resource.version(Bridge.FrameworkName)
 
+-- Flag to track if gang support is available
+local GangsEnabled = false
+
 IsExport, ESX = pcall(function()
     return exports[Bridge.FrameworkName]:getSharedObject()
 end)
@@ -32,29 +35,52 @@ RegisterNetEvent(Bridge.Resource .. ':ClientCallback', function(requestId, ...)
 end)
 
 AddEventHandler(Bridge.FrameworkPrefix .. ':playerLoaded', function(playerId, xPlayer)
-    local player = Database.prepare('SELECT `gang`, `gang_grade`, `metadata` FROM `users` WHERE identifier = ?',
-        { xPlayer.getIdentifier() })
-    local gang = player.gang
-    local grade = tostring(player.gang_grade)
+    -- Only query gang data if gangs are enabled
+    local player = nil
+    local gang = 'none'
+    local grade = '0'
+    
+    if GangsEnabled then
+        local success, result = pcall(Database.prepare, 'SELECT `gang`, `gang_grade`, `metadata` FROM `users` WHERE identifier = ?',
+            { xPlayer.getIdentifier() })
+        if success and result then
+            player = result
+            gang = player.gang or 'none'
+            grade = tostring(player.gang_grade or 0)
+        end
+    else
+        -- Query only metadata if gangs are not enabled
+        local success, result = pcall(Database.prepare, 'SELECT `metadata` FROM `users` WHERE identifier = ?',
+            { xPlayer.getIdentifier() })
+        if success and result then
+            player = result
+        end
+    end
+    
     local gangObject = {}
     local gradeObject = {}
 
-    if Framework.DoesGangExist(gang, grade) then
-        gangObject, gradeObject = ESX.Gangs[gang], ESX.Gangs[gang].grades[grade]
-    else
-        if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring invalid gang for ^5%s^7 [gang: ^5%s^7, grade: ^5%s^7]')
-            :format(xPlayer.getIdentifier(), gang, grade)) end
-        gang, grade = 'none', '0'
-        gangObject, gradeObject = ESX.Gangs[gang], ESX.Gangs[gang].grades[grade]
+    -- Only process gang data if gangs are enabled and ESX.Gangs exists
+    if GangsEnabled and ESX.Gangs then
+        if Framework.DoesGangExist(gang, grade) then
+            gangObject, gradeObject = ESX.Gangs[gang], ESX.Gangs[gang].grades[grade]
+        else
+            if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring invalid gang for ^5%s^7 [gang: ^5%s^7, grade: ^5%s^7]')
+                :format(xPlayer.getIdentifier(), gang, grade)) end
+            gang, grade = 'none', '0'
+            if ESX.Gangs['none'] then
+                gangObject, gradeObject = ESX.Gangs['none'], ESX.Gangs['none'].grades['0']
+            end
+        end
     end
 
+    -- Build gang data with defaults if gangs are not enabled
     local gangData = {}
-    gangData.name = gangObject.name
-    gangData.label = gangObject.label
-
-    gangData.grade = tonumber(grade)
-    gangData.grade_name = gradeObject.name
-    gangData.grade_label = gradeObject.label
+    gangData.name = gangObject.name or 'none'
+    gangData.label = gangObject.label or 'No Gang Affiliation'
+    gangData.grade = tonumber(grade) or 0
+    gangData.grade_name = gradeObject.name or 'none'
+    gangData.grade_label = gradeObject.label or 'None'
 
     xPlayer.triggerEvent(Bridge.FrameworkPrefix .. ':setGang', gangData)
     xPlayer.set('gang', gangData)
@@ -63,7 +89,7 @@ AddEventHandler(Bridge.FrameworkPrefix .. ':playerLoaded', function(playerId, xP
     xPlayer.set('duty', false)
 
     local metadata = pcall(xPlayer.getMeta)
-    if not metadata then
+    if not metadata and player and player.metadata then
         xPlayer.triggerEvent(Bridge.FrameworkPrefix .. ':setMetadata', json.decode(player.metadata))
         xPlayer.set('metadata', json.decode(player.metadata))
     end
@@ -175,6 +201,12 @@ Framework.GetPlayer = function(source)
     end
 
     self.SetGang = function(gang, grade)
+        -- If gangs are not enabled, return false gracefully
+        if not GangsEnabled then
+            if Bridge.DebugMode then print('[^3WARNING^7] Gang system is not enabled on this server') end
+            return false
+        end
+        
         grade = tostring(grade)
         if not Framework.DoesGangExist(gang, grade) then return false end
         local gangObject, gradeObject = ESX.Gangs[gang], ESX.Gangs[gang].grades[grade]
@@ -356,6 +388,11 @@ Framework.GetJobs = function()
 end
 
 Framework.DoesGangExist = function(gang, grade)
+    -- If gangs are not enabled, always return false
+    if not GangsEnabled or not ESX.Gangs then
+        return false
+    end
+    
     grade = tostring(grade)
     if gang and grade then
         if ESX.Gangs[gang] and ESX.Gangs[gang].grades[grade] then
@@ -365,6 +402,11 @@ Framework.DoesGangExist = function(gang, grade)
         end
     end
     return false
+end
+
+-- Check if gang system is enabled on this server
+Framework.IsGangSystemEnabled = function()
+    return GangsEnabled
 end
 
 Framework.RegisterSociety = function(name, type)
@@ -457,69 +499,66 @@ end
 
 Citizen.CreateThreadNow(function()
     ESX.Gangs = {}
-    -- local success, result = pcall(Database.scalar, 'SELECT 1 FROM gangs')
-    -- if not success then
-    --     Database.query([[CREATE TABLE IF NOT EXISTS `gangs` (
-	--         `name` varchar(50) NOT NULL,
-    --         `label` varchar(50) DEFAULT NULL,
-    --         PRIMARY KEY (`name`)
-    --     )]])
-    -- end
+    
+    -- Check if gang support exists by testing for gang column in users table
+    local gangColumnExists = pcall(Database.scalar, 'SELECT gang FROM users LIMIT 1')
+    local gangTableExists = pcall(Database.scalar, 'SELECT 1 FROM gangs LIMIT 1')
+    local gangGradesTableExists = pcall(Database.scalar, 'SELECT 1 FROM gang_grades LIMIT 1')
+    
+    -- Gang support is enabled only if the gang column exists in users table
+    -- and the gangs/gang_grades tables exist
+    if gangColumnExists and gangTableExists and gangGradesTableExists then
+        GangsEnabled = true
+        
+        -- Load gangs from database
+        local success, gangs = pcall(Database.query, 'SELECT * FROM gangs')
+        if success and gangs then
+            for _, v in ipairs(gangs) do
+                ESX.Gangs[v.name] = v
+                ESX.Gangs[v.name].grades = {}
+            end
+        end
 
-    -- local success, result = pcall(Database.scalar, 'SELECT 1 FROM gang_grades')
-    -- if not success then
-    --     Database.query([[CREATE TABLE IF NOT EXISTS `gang_grades` (
-	--         `id` int(11) NOT NULL,
-    --         `gang_name` varchar(50) DEFAULT NULL,
-    --         `grade` int(11) NOT NULL,
-    --         `name` varchar(50) NOT NULL,
-    --         `label` varchar(50) NOT NULL,
-    --         PRIMARY KEY (`id`)
-    --     )]])
-    -- end
+        -- Load gang grades from database
+        local success, gang_grades = pcall(Database.query, 'SELECT * FROM gang_grades')
+        if success and gang_grades then
+            for _, v in ipairs(gang_grades) do
+                if ESX.Gangs[v.gang_name] then
+                    ESX.Gangs[v.gang_name].grades[tostring(v.grade)] = v
+                else
+                    if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang grades for ^5"%s"^0 due to missing gang')
+                        :format(v.gang_name)) end
+                end
+            end
+        end
 
-    -- local success, result = pcall(Database.scalar, 'SELECT gang FROM users')
-    -- if not success then
-    --     Database.query("ALTER TABLE `users` ADD COLUMN `gang` varchar(20) DEFAULT 'none' AFTER job_grade")
-    -- end
+        -- Remove gangs without grades
+        for _, v in pairs(ESX.Gangs) do
+            if next(v.grades) == nil then
+                ESX.Gangs[v.name] = nil
+                if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang ^5"%s"^0 due to no gang grades found'):format(v
+                    .name)) end
+            end
+        end
 
-    -- local success, result = pcall(Database.scalar, 'SELECT gang_grade FROM users')
-    -- if not success then
-    --     Database.query('ALTER TABLE `users` ADD COLUMN `gang_grade` int(11) DEFAULT 0 AFTER gang')
-    -- end
-
-    -- local success, gangs = pcall(Database.query, 'SELECT * FROM gangs')
-    -- if success then
-    --     for _, v in ipairs(gangs) do
-    --         ESX.Gangs[v.name] = v
-    --         ESX.Gangs[v.name].grades = {}
-    --     end
-    -- end
-
-    -- local success, gang_grades = pcall(Database.query, 'SELECT * FROM gang_grades')
-    -- if success then
-    --     for _, v in ipairs(gang_grades) do
-    --         if ESX.Gangs[v.gang_name] then
-    --             ESX.Gangs[v.gang_name].grades[tostring(v.grade)] = v
-    --         else
-    --             if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang grades for ^5"%s"^0 due to missing gang')
-    --                 :format(v.gang_name)) end
-    --         end
-    --     end
-    -- end
-
-    -- for _, v in pairs(ESX.Gangs) do
-    --     if next(v.grades) == nil then
-    --         ESX.Gangs[v.name] = nil
-    --         if Bridge.DebugMode then print(('[^3WARNING^7] Ignoring gang ^5"%s"^0 due to no gang grades found'):format(v
-    --             .name)) end
-    --     end
-    -- end
-
-    -- ESX.Gangs['none'] = {
-    --     label = 'No Gang Affiliaton',
-    --     grades = { ['0'] = { grade = 0, label = 'None' } }
-    -- }
+        -- Add default 'none' gang
+        ESX.Gangs['none'] = {
+            name = 'none',
+            label = 'No Gang Affiliation',
+            grades = { ['0'] = { grade = 0, name = 'none', label = 'None' } }
+        }
+        
+        if Bridge.DebugMode then print('[^2INFO^7] Gang system enabled - gang tables found') end
+    else
+        GangsEnabled = false
+        -- Set up default 'none' gang even if gangs are disabled for compatibility
+        ESX.Gangs['none'] = {
+            name = 'none',
+            label = 'No Gang Affiliation',
+            grades = { ['0'] = { grade = 0, name = 'none', label = 'None' } }
+        }
+        if Bridge.DebugMode then print('[^3WARNING^7] Gang system disabled - gang tables not found (this is normal if your server does not use gangs)') end
+    end
 
     local success, result = pcall(Database.scalar, 'SELECT metadata FROM users')
     if not success then

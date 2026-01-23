@@ -198,15 +198,15 @@ if override?.imagepath then
     Bridge.InventoryImagePath = override?.imagepath
 end
 
--- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | AK47_INVENTORY | CODEM-INVENTORY ❕
-if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-inventory') ~= 'missing' or GetResourceState('lj-inventory') ~= 'missing' or GetResourceState('aj-inventory') ~= 'missing' or GetResourceState('ax-inventory') ~= 'missing' or GetResourceState('ps-inventory') ~= 'missing' or GetResourceState('ak47_inventory') ~= 'missing' or GetResourceState('codem-inventory') ~= 'missing' or GetResourceState('l2s-inventory') ~= 'missing') then
+-- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | ak47_qb_inventory | CODEM-INVENTORY ❕
+if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-inventory') ~= 'missing' or GetResourceState('lj-inventory') ~= 'missing' or GetResourceState('aj-inventory') ~= 'missing' or GetResourceState('ax-inventory') ~= 'missing' or GetResourceState('ps-inventory') ~= 'missing' or GetResourceState('ak47_qb_inventory') ~= 'missing' or GetResourceState('codem-inventory') ~= 'missing' or GetResourceState('l2s-inventory') ~= 'missing') then
     if not Bridge.InventoryName then
         if GetResourceState('qb-inventory') ~= 'missing' then Bridge.InventoryName = 'qb-inventory' end
         if GetResourceState('lj-inventory') ~= 'missing' then Bridge.InventoryName = 'lj-inventory' end
         if GetResourceState('aj-inventory') ~= 'missing' then Bridge.InventoryName = 'aj-inventory' end
         if GetResourceState('ax-inventory') ~= 'missing' then Bridge.InventoryName = 'ax-inventory' end
         if GetResourceState('ps-inventory') ~= 'missing' then Bridge.InventoryName = 'ps-inventory' end
-        if GetResourceState('ak47_inventory') ~= 'missing' then Bridge.InventoryName = 'ak47_inventory' end
+        if GetResourceState('ak47_qb_inventory') ~= 'missing' then Bridge.InventoryName = 'ak47_qb_inventory' end
         if GetResourceState('codem-inventory') ~= 'missing' then Bridge.InventoryName = 'codem-inventory' end
         if GetResourceState('l2s-inventory') ~= 'missing' then Bridge.InventoryName = 'l2s-inventory' end
 

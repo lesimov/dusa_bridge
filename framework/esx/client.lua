@@ -68,13 +68,24 @@ RegisterNetEvent(Bridge.FrameworkPrefix .. ':setDuty', function(Duty)
 end)
 
 RegisterNetEvent(Bridge.FrameworkPrefix .. ':setGang', function(Gang)
+    -- Handle nil gang data gracefully
+    if not Gang then
+        Gang = {
+            name = 'none',
+            label = 'No Gang Affiliation',
+            grade = 0,
+            grade_name = 'none',
+            grade_label = 'None'
+        }
+    end
+    
     Framework.Player.Gang = {}
-    Framework.Player.Gang.Name = Gang.name
-    Framework.Player.Gang.Label = Gang.label
+    Framework.Player.Gang.Name = Gang.name or 'none'
+    Framework.Player.Gang.Label = Gang.label or 'No Gang Affiliation'
     Framework.Player.Gang.Boss = Gang.grade_name == 'boss' and true or false
     Framework.Player.Gang.Grade = {}
-    Framework.Player.Gang.Grade.Name = Gang.grade_label
-    Framework.Player.Gang.Grade.Level = Gang.grade
+    Framework.Player.Gang.Grade.Name = Gang.grade_label or 'None'
+    Framework.Player.Gang.Grade.Level = Gang.grade or 0
     ESX.SetPlayerData('gang', Gang)
     pcall(Framework.OnGangUpdate)
 end)
@@ -133,12 +144,20 @@ Framework.SetPlayerData = function(PlayerData)
     end
     Framework.Player.Gang = Framework.Player.Gang or {}
     if PlayerData.gang then
-        Framework.Player.Gang.Name = PlayerData.gang.name
-        Framework.Player.Gang.Label = PlayerData.gang.label
+        Framework.Player.Gang.Name = PlayerData.gang.name or 'none'
+        Framework.Player.Gang.Label = PlayerData.gang.label or 'No Gang Affiliation'
         Framework.Player.Gang.Boss = PlayerData.gang.grade_name == 'boss' and true or false
         Framework.Player.Gang.Grade = Framework.Player.Gang.Grade or {}
-        Framework.Player.Gang.Grade.Name = PlayerData.gang.grade_label
-        Framework.Player.Gang.Grade.Level = PlayerData.gang.grade
+        Framework.Player.Gang.Grade.Name = PlayerData.gang.grade_label or 'None'
+        Framework.Player.Gang.Grade.Level = PlayerData.gang.grade or 0
+    else
+        -- Set default gang values if gang data is not available
+        Framework.Player.Gang.Name = 'none'
+        Framework.Player.Gang.Label = 'No Gang Affiliation'
+        Framework.Player.Gang.Boss = false
+        Framework.Player.Gang.Grade = Framework.Player.Gang.Grade or {}
+        Framework.Player.Gang.Grade.Name = 'None'
+        Framework.Player.Gang.Grade.Level = 0
     end
     if PlayerData.accounts then
         Framework.Player.Accounts = {}

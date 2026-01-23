@@ -19,7 +19,10 @@ if not TelemetryCapture or not TelemetryContext or not TelemetrySentry or not Te
     return
 end
 
-print('^2[Telemetry]^7 Initializing server telemetry...')
+local silentMode = TelemetryConfig and TelemetryConfig.Features and TelemetryConfig.Features.SilentMode or false
+if not silentMode then
+    print('^2[Telemetry]^7 Initializing server telemetry...')
+end
 
 -- Aliases for easier access
 local Capture = TelemetryCapture
@@ -368,4 +371,6 @@ lib.addCommand('telemetrytest2', {
     end
 end)
 
-print('^2[Telemetry]^7 Server telemetry initialized')
+if not silentMode then
+    print('^2[Telemetry]^7 Server telemetry initialized')
+end

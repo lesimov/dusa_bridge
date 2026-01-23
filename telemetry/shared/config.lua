@@ -36,6 +36,7 @@ TelemetryConfig.Features = {
     EnableTraceIntegration = true,  -- Send trace anomalies to Sentry
     EnableDegradationTracking = true, -- Track graceful degradation
     NotifyPlayerOnError = true,     -- Show error ID notification to players (for testers)
+    SilentMode = true,              -- Disable startup messages
 }
 
 -- Sentry settings
