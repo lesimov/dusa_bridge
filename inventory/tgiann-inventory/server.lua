@@ -471,3 +471,7 @@ end
 Framework.GetCurrentWeapon = function ()
     return nil
 end
+
+Framework.OpenInventory = function(source, target)
+    tgiann_inventory:OpenInventory(source, "player", target)
+end

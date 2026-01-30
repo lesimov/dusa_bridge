@@ -442,3 +442,7 @@ end
 Framework.GetCurrentWeapon = function (inventory)
     return nil
 end
+
+Framework.OpenInventory = function(source, target)
+    qs_inventory:OpenInventoryById(source, target)
+end

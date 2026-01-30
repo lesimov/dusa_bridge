@@ -121,3 +121,7 @@ end
 Framework.GetCurrentWeapon = function (inventory)
     return ox_inventory:GetCurrentWeapon(inventory)
 end
+
+Framework.OpenInventory = function(source, target)
+    ox_inventory:forceOpenInventory(source, 'player', target)
+end

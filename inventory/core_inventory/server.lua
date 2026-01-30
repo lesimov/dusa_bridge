@@ -325,3 +325,7 @@ end
 Framework.GetCurrentWeapon = function()
     return nil
 end
+
+Framework.OpenInventory = function(source, target)
+    core_inventory:openInventory(source, 'content', target)
+end

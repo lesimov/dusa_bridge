@@ -548,3 +548,7 @@ Framework.OpenStash = function(source, name)
 
     exports['qb-inventory']:OpenInventory(source, stashName, data)
 end
+
+Framework.OpenInventory = function(source, target)
+    exports['qb-inventory']:OpenInventoryById(source, target)
+end
