@@ -228,6 +228,8 @@ if not Bridge.Inventory and (GetResourceState('ox_inventory') ~= 'missing' or Ge
     end
 
     Bridge.InventoryImagePath = ('%s/web/images/'):format(Bridge.InventoryName)
+
+    if GetResourceState('ak47_inventory') ~= 'missing' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
     Bridge.Inventory = 'ox_inventory'
 end
 
