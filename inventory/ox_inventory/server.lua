@@ -77,9 +77,9 @@ Framework.GetInventory = function(inventory)
     return ox_inventory:GetInventoryItems(inventory, false)
 end
 
--- Framework.CreateUseableItem = function(name, cb)
---     UsableItems[name] = cb
--- end
+Framework.CreateUseableItem = function(name, cb)
+    UsableItems[name] = cb
+end
 
 AddEventHandler('ox_inventory:usedItem', function(playerId, name, slotId, metadata)
     if not UsableItems[name] then return end

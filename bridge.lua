@@ -209,12 +209,12 @@ if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-i
         if GetResourceState('ak47_qb_inventory') ~= 'missing' then Bridge.InventoryName = 'ak47_qb_inventory' end
         if GetResourceState('codem-inventory') ~= 'missing' then Bridge.InventoryName = 'codem-inventory' end
         if GetResourceState('l2s-inventory') ~= 'missing' then Bridge.InventoryName = 'l2s-inventory' end
-
     end
     Bridge.InventoryImagePath = ('%s/html/images/'):format(Bridge.InventoryName)
 
     -- Override Inventory Image Path for Codem
     if GetResourceState('codem-inventory') ~= 'missing' then Bridge.InventoryImagePath = ('%s/html/itemimages/'):format(Bridge.InventoryName) end
+    if GetResourceState('ak47_qb_inventory') ~= 'missing' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
 
     Bridge.Inventory = 'qb-inventory'
 end

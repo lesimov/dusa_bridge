@@ -340,10 +340,10 @@ lib.addCommand('telemetrytest2', {
         message = 'Callback error in mechanic:getWorkOrders - attempt to index nil value (field \'status\')',
         category = 'CALLBACK_ERROR',
         level = 'error',
-        resourceName = 'dusa_mechanicv2',
+        resourceName = 'dusa_mechanic',
         stackTrace = [[stack traceback:
-    @dusa_mechanicv2/server/tablet/callbacks.lua:156: in function 'getWorkOrders'
-    @dusa_mechanicv2/server/tablet/callbacks.lua:42: in function <@dusa_mechanicv2/server/tablet/callbacks.lua:40>
+    @dusa_mechanic/server/tablet/callbacks.lua:156: in function 'getWorkOrders'
+    @dusa_mechanic/server/tablet/callbacks.lua:42: in function <@dusa_mechanic/server/tablet/callbacks.lua:40>
     @ox_lib/resource/callback/server.lua:45: in function 'cb'
     citizen:/scripting/lua/scheduler.lua:175: in function <citizen:/scripting/lua/scheduler.lua:174>]],
         context = {
