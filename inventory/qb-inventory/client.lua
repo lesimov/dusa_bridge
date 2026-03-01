@@ -52,7 +52,7 @@ Framework.GetItem = function(item, metadata, strict)
         if metadata and (strict and not table.matches(v.info, metadata) or not table.contains(v.info, metadata)) then goto skipLoop end
         items[#items + 1] = {
             name = v.name,
-            count = tonumber(v.amount),
+            count = tonumber(v.amount) or 0,
             label = v.label,
             description = v.description,
             metadata = v.info,

@@ -39,7 +39,7 @@ local function GetStashItems(inventory)
 		if itemInfo then
             items[item.slot] = {
                 name = itemInfo.name,
-                count = tonumber(item.amount),
+                count = tonumber(item.amount) or 0,
                 label = itemInfo.label,
                 description = itemInfo.description,
                 metadata = item.info,
@@ -269,12 +269,12 @@ Framework.GetItem = function(inventory, item, metadata, strict)
         end
     elseif type(inventory) == "number" then
         local Player = QBCore.Functions.GetPlayer(inventory)
-        for k, v in pairs(Player.PlayerData.items) do 
+        for k, v in pairs(Player.PlayerData.items) do
             if v.name ~= item then goto skipLoop end
             if metadata and (strict and not table.matches(v.info, metadata) or not table.contains(v.info, metadata)) then goto skipLoop end
             items[#items+1] = {
                 name = v.name,
-                count = tonumber(v.amount),
+                count = tonumber(v.amount) or 0,
                 label = v.label,
                 description = v.description,
                 metadata = v.info,
@@ -401,7 +401,7 @@ Framework.GetInventory = function(inventory)
         for k, v in pairs(Player.PlayerData.items) do
             items[k] = {
                 name = v.name,
-                count = tonumber(v.amount),
+                count = tonumber(v.amount) or 0,
                 label = v.label,
                 description = v.description,
                 metadata = v.info,
