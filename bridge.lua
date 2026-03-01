@@ -86,7 +86,7 @@ if override?.databasename then
 end
 
 -- ❕ OXMYSQL ❕
-if not Bridge.Database and GetResourceState('oxmysql') ~= 'missing' then
+if not Bridge.Database and GetResourceState('oxmysql') == 'started' then
     if not Bridge.DatabaseName then Bridge.DatabaseName = 'oxmysql' end
     Bridge.Database = 'oxmysql'
 end
@@ -127,7 +127,7 @@ if override?.frameworkprefix then
 end
 
 -- ❕ ESX ❕
-if not Bridge.Framework and GetResourceState('es_extended') ~= 'missing' then
+if not Bridge.Framework and GetResourceState('es_extended') == 'started' then
     if not Bridge.FrameworkName then Bridge.FrameworkName = 'es_extended' end
     if not Bridge.FrameworkEvent then Bridge.FrameworkEvent = 'esx:getSharedObject' end
     if not Bridge.FrameworkPrefix then Bridge.FrameworkPrefix = 'esx' end
@@ -135,14 +135,14 @@ if not Bridge.Framework and GetResourceState('es_extended') ~= 'missing' then
 end
 
 -- ❕ QBox ❕
-if not Bridge.Framework and GetResourceState('qbx_core') ~= 'missing' then
+if not Bridge.Framework and GetResourceState('qbx_core') == 'started' then
     if not Bridge.FrameworkName then Bridge.FrameworkName = 'qbx_core' end
     if not Bridge.FrameworkPrefix then Bridge.FrameworkPrefix = 'QBCore' end
     Bridge.Framework = 'qbox'
 end
 
 -- ❕ QBCore ❕
-if not Bridge.Framework and GetResourceState('qb-core') ~= 'missing' then
+if not Bridge.Framework and GetResourceState('qb-core') == 'started' then
     if not Bridge.FrameworkName then Bridge.FrameworkName = 'qb-core' end
     if not Bridge.FrameworkEvent then Bridge.FrameworkEvent = 'QBCore:GetObject' end
     if not Bridge.FrameworkPrefix then Bridge.FrameworkPrefix = 'QBCore' end
@@ -150,19 +150,19 @@ if not Bridge.Framework and GetResourceState('qb-core') ~= 'missing' then
 end
 
 -- ❕ OX Core ❕
-if not Bridge.Framework and GetResourceState('ox_core') ~= 'missing' then
+if not Bridge.Framework and GetResourceState('ox_core') == 'started' then
     if not Bridge.FrameworkName then Bridge.FrameworkName = 'ox_core' end
     if not Bridge.FrameworkPrefix then Bridge.FrameworkPrefix = 'ox' end
     Bridge.Framework = 'ox'
 end
 
 -- ❕ vRP ❕
-if not Bridge.Framework and GetResourceState('vrp') ~= 'missing' then
+if not Bridge.Framework and GetResourceState('vrp') == 'started' then
     Bridge.Framework = 'vrp'
 end
 
 -- ❕ NDCore ❕
-if not Bridge.Framework and GetResourceState('ND_Core') ~= 'missing' then
+if not Bridge.Framework and GetResourceState('ND_Core') == 'started' then
     if not Bridge.FrameworkName then Bridge.FrameworkName = 'ND_Core' end
     if not Bridge.FrameworkPrefix then Bridge.FrameworkPrefix = 'ND' end
     Bridge.Framework = 'ndcore'
@@ -198,57 +198,56 @@ if override?.imagepath then
     Bridge.InventoryImagePath = override?.imagepath
 end
 
--- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | ak47_qb_inventory | CODEM-INVENTORY ❕
-if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-inventory') ~= 'missing' or GetResourceState('lj-inventory') ~= 'missing' or GetResourceState('aj-inventory') ~= 'missing' or GetResourceState('ax-inventory') ~= 'missing' or GetResourceState('ps-inventory') ~= 'missing' or GetResourceState('ak47_qb_inventory') ~= 'missing' or GetResourceState('codem-inventory') ~= 'missing' or GetResourceState('l2s-inventory') ~= 'missing') then
-    if not Bridge.InventoryName then
-        if GetResourceState('qb-inventory') ~= 'missing' then Bridge.InventoryName = 'qb-inventory' end
-        if GetResourceState('lj-inventory') ~= 'missing' then Bridge.InventoryName = 'lj-inventory' end
-        if GetResourceState('aj-inventory') ~= 'missing' then Bridge.InventoryName = 'aj-inventory' end
-        if GetResourceState('ax-inventory') ~= 'missing' then Bridge.InventoryName = 'ax-inventory' end
-        if GetResourceState('ps-inventory') ~= 'missing' then Bridge.InventoryName = 'ps-inventory' end
-        if GetResourceState('ak47_qb_inventory') ~= 'missing' then Bridge.InventoryName = 'ak47_qb_inventory' end
-        if GetResourceState('codem-inventory') ~= 'missing' then Bridge.InventoryName = 'codem-inventory' end
-        if GetResourceState('l2s-inventory') ~= 'missing' then Bridge.InventoryName = 'l2s-inventory' end
-    end
-    Bridge.InventoryImagePath = ('%s/html/images/'):format(Bridge.InventoryName)
-
-    -- Override Inventory Image Path for Codem
-    if GetResourceState('codem-inventory') ~= 'missing' then Bridge.InventoryImagePath = ('%s/html/itemimages/'):format(Bridge.InventoryName) end
-    if GetResourceState('ak47_qb_inventory') ~= 'missing' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
-
-    Bridge.Inventory = 'qb-inventory'
-end
-
-
 -- ❕ OX_INVENTORY ❕
-if not Bridge.Inventory and (GetResourceState('ox_inventory') ~= 'missing' or GetResourceState('ak47_inventory') ~= 'missing') then
-    if not Bridge.InventoryName then 
-        if GetResourceState('ox_inventory') ~= 'missing' then Bridge.InventoryName = 'ox_inventory' end
-        if GetResourceState('ak47_inventory') ~= 'missing' then Bridge.InventoryName = 'ak47_inventory' end
+if not Bridge.Inventory and (GetResourceState('ox_inventory') == 'started' or GetResourceState('ak47_inventory') == 'started') then
+    if not Bridge.InventoryName then
+        if GetResourceState('ox_inventory') == 'started' then Bridge.InventoryName = 'ox_inventory' end
+        if GetResourceState('ak47_inventory') == 'started' then Bridge.InventoryName = 'ak47_inventory' end
     end
 
     Bridge.InventoryImagePath = ('%s/web/images/'):format(Bridge.InventoryName)
 
-    if GetResourceState('ak47_inventory') ~= 'missing' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
+    if GetResourceState('ak47_inventory') == 'started' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
     Bridge.Inventory = 'ox_inventory'
 end
 
+-- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | ak47_qb_inventory | CODEM-INVENTORY ❕
+if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-inventory') == 'started' or GetResourceState('lj-inventory') == 'started' or GetResourceState('aj-inventory') == 'started' or GetResourceState('ax-inventory') == 'started' or GetResourceState('ps-inventory') == 'started' or GetResourceState('ak47_qb_inventory') == 'started' or GetResourceState('codem-inventory') == 'started' or GetResourceState('l2s-inventory') == 'started') then
+    if not Bridge.InventoryName then
+        if GetResourceState('qb-inventory') == 'started' then Bridge.InventoryName = 'qb-inventory' end
+        if GetResourceState('lj-inventory') == 'started' then Bridge.InventoryName = 'lj-inventory' end
+        if GetResourceState('aj-inventory') == 'started' then Bridge.InventoryName = 'aj-inventory' end
+        if GetResourceState('ax-inventory') == 'started' then Bridge.InventoryName = 'ax-inventory' end
+        if GetResourceState('ps-inventory') == 'started' then Bridge.InventoryName = 'ps-inventory' end
+        if GetResourceState('ak47_qb_inventory') == 'started' then Bridge.InventoryName = 'ak47_qb_inventory' end
+        if GetResourceState('codem-inventory') == 'started' then Bridge.InventoryName = 'codem-inventory' end
+        if GetResourceState('l2s-inventory') == 'started' then Bridge.InventoryName = 'l2s-inventory' end
+    end
+    Bridge.InventoryImagePath = ('%s/html/images/'):format(Bridge.InventoryName)
+
+    -- Override Inventory Image Path for Codem
+    if GetResourceState('codem-inventory') == 'started' then Bridge.InventoryImagePath = ('%s/html/itemimages/'):format(Bridge.InventoryName) end
+    if GetResourceState('ak47_qb_inventory') == 'started' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
+
+    Bridge.Inventory = 'qb-inventory'
+end
+
 -- ❕ QS-INVENTORY ❕
-if not Bridge.Inventory and GetResourceState('qs-inventory') ~= 'missing' then
+if not Bridge.Inventory and GetResourceState('qs-inventory') == 'started' then
     if not Bridge.InventoryName then Bridge.InventoryName = 'qs-inventory' end
     Bridge.InventoryImagePath = ('%s/html/images/'):format(Bridge.InventoryName)
     Bridge.Inventory = 'qs-inventory'
 end
 
 -- ❕ TGIANN-INVENTORY ❕
-if not Bridge.Inventory and GetResourceState('tgiann-inventory') ~= 'missing' then
+if not Bridge.Inventory and GetResourceState('tgiann-inventory') == 'started' then
     if not Bridge.InventoryName then Bridge.InventoryName = 'tgiann-inventory' end
     Bridge.InventoryImagePath = 'inventory_images/images/'
     Bridge.Inventory = 'tgiann-inventory'
 end
 
 -- ❕ CORE_INVENTORY ❕
-if not Bridge.Inventory and GetResourceState('core_inventory') ~= 'missing' then
+if not Bridge.Inventory and GetResourceState('core_inventory') == 'started' then
     if not Bridge.InventoryName then Bridge.InventoryName = 'core_inventory' end
     Bridge.InventoryImagePath = ('%s/html/img/'):format(Bridge.InventoryName)
     Bridge.Inventory = 'core_inventory'
