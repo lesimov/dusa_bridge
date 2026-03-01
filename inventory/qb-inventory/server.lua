@@ -468,20 +468,82 @@ Framework.CreateCallback(Bridge.Resource .. ':bridge:GetStash', function(source,
     cb(stashes[name] and stashes[name] or nil)
 end)
 
+Framework.CreateCallback(Bridge.Resource .. ':bridge:OpenStash', function(source, cb, name)
+    name = name:gsub("%-", "_")
+    local stash = stashes[name]
+    if not stash then return cb(false) end
+
+    local Player = Framework.GetPlayer(source)
+    if not Player then return cb(false) end
+
+    if stash.groups then
+        local isAllowed = false
+        if Framework.HasJob(stash.groups, Player) then isAllowed = true end
+        if Framework.HasGang(stash.groups, Player) then isAllowed = true end
+        if not isAllowed then return cb(false) end
+    end
+
+    local stashName = name
+    if stash.owner and type(stash.owner) == 'string' and Player.Identifier ~= stash.owner then
+        return cb(false)
+    end
+    if stash.owner and type(stash.owner) == 'boolean' and stash.owner == true then
+        stashName = name .. Player.Identifier
+    end
+
+    local maxweight = tonumber(stash.weight) or 1000000
+    local slots = tonumber(stash.slots) or 50
+
+    exports['qb-inventory']:OpenInventory(source, stashName, {
+        label = stashName,
+        maxweight = maxweight,
+        slots = slots,
+    })
+    cb(true)
+end)
+
 local shops = {}
 Framework.RegisterShop = function(name, data)
     if shops[name] then return end
     shops[name] = data
+
+    -- Register with qb-inventory's native CreateShop export
+    local shopItems = {}
+    if data.items then
+        for i, item in ipairs(data.items) do
+            shopItems[i] = {
+                name = item.name,
+                amount = item.count or 1,
+                price = item.price,
+                info = item.metadata or {},
+            }
+        end
+    end
+
+    exports['qb-inventory']:CreateShop({
+        name = name,
+        label = data.name or name,
+        coords = data.coords,
+        items = shopItems,
+    })
 end
 
 Framework.CreateCallback(Bridge.Resource .. ':bridge:OpenShop', function(source, cb, name)
-    if not shops[name] then cb({}) end
-    local isAllowed = false
+    if not shops[name] then return cb(false) end
+
     local Player = Framework.GetPlayer(source)
-    if shops[name].groups and Framework.HasJob(shops[name].groups, Player) then isAllowed = true end
-    if shops[name].groups and Framework.HasGang(shops[name].groups, Player) then isAllowed = true end
-    if type(shops[name].groups) == "table" and (shops[name].groups and not isAllowed) then cb({}) end
-    cb(shops[name])
+    if not Player then return cb(false) end
+
+    if shops[name].groups then
+        local isAllowed = false
+        if Framework.HasJob(shops[name].groups, Player) then isAllowed = true end
+        if Framework.HasGang(shops[name].groups, Player) then isAllowed = true end
+        if not isAllowed then return cb(false) end
+    end
+
+    -- Use qb-inventory's native OpenShop export
+    exports['qb-inventory']:OpenShop(source, name)
+    cb(true)
 end)
 
 Framework.ConfiscateInventory = function(source)

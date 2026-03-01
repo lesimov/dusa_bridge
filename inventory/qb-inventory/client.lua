@@ -27,45 +27,14 @@ end)
 
 Framework.OpenStash = function(name)
     name = name:gsub("%-", "_")
-    Framework.TriggerCallback(Bridge.Resource .. ':bridge:GetStash', function(stash)
-        if not stash then return end
-
-        local isAllowed = false
-        if stash.groups then
-            if Framework.HasJob(stash.groups, Framework.Player) then isAllowed = true end
-            if Framework.HasGang(stash.groups, Framework.Player) then isAllowed = true end
-            if not isAllowed then return end
-        else
-            isAllowed = true
-        end
-
-        if stash.owner and type(stash.owner) == 'string' and Framework.Player.Identifier ~= stash.owner then return end
-        if stash.owner and type(stash.owner) == 'boolean' then
-            name = name .. Framework.Player.Identifier
-        end
-
-        TriggerServerEvent(Bridge.Resource .. ':bridge:openStash', name, stash.weight, stash.slots)
+    Framework.TriggerCallback(Bridge.Resource .. ':bridge:OpenStash', function(success)
+        -- Stash is opened server-side via qb-inventory's OpenInventory export
     end, name)
 end
 
 Framework.OpenShop = function(name)
-    Framework.TriggerCallback(Bridge.Resource .. ':bridge:OpenShop', function(shopdata)
-        if table.type(shopdata) ~= 'empty' then
-            local Shop = {}
-            Shop.label = shopdata.name
-            Shop.items = {}
-            for i = 1, #shopdata.items do
-                Shop.items[i] = {
-                    name = shopdata.items[i].name,
-                    price = shopdata.items[i].price,
-                    amount = shopdata.items[i].count or 1,
-                    info = shopdata.items[i].metadata or {},
-                    type = Framework.Items[shopdata.items[i].name].type,
-                    slot = i
-                }
-            end
-            TriggerServerEvent("inventory:server:OpenInventory", "shop", shopdata.name, Shop)
-        end   
+    Framework.TriggerCallback(Bridge.Resource .. ':bridge:OpenShop', function(success)
+        -- Shop is opened server-side via qb-inventory's OpenShop export
     end, name)
 end
 
