@@ -473,5 +473,20 @@ Framework.GetCurrentWeapon = function ()
 end
 
 Framework.OpenInventory = function(source, target)
-    tgiann_inventory:OpenInventory(source, "player", target)
+    -- Try OpenInventoryById first (some tgiann builds expose this for search/read-only)
+    local ok = pcall(function()
+        tgiann_inventory:OpenInventoryById(source, target, true)
+    end)
+    if ok then return true end
+
+    -- Fallback: standard OpenInventory
+    local ok2 = pcall(function()
+        tgiann_inventory:OpenInventory(source, "player", target)
+    end)
+    if ok2 then return true end
+
+    -- Last resort: server events (older tgiann builds)
+    TriggerEvent('inventory:server:OpenInventoryById', source, target, true)
+    TriggerEvent('inventory:server:OpenInventory', source, 'player', target)
+    return true
 end
