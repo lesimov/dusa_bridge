@@ -199,10 +199,11 @@ if override?.imagepath then
 end
 
 -- ❕ OX_INVENTORY ❕
-if not Bridge.Inventory and (GetResourceState('ox_inventory') == 'started' or GetResourceState('ak47_inventory') == 'started') then
+if not Bridge.Inventory and (GetResourceState('ox_inventory') == 'started' or GetResourceState('ak47_inventory') == 'started' or GetResourceState('jaksam_inventory') == 'started') then
     if not Bridge.InventoryName then
         if GetResourceState('ox_inventory') == 'started' then Bridge.InventoryName = 'ox_inventory' end
         if GetResourceState('ak47_inventory') == 'started' then Bridge.InventoryName = 'ak47_inventory' end
+        if GetResourceState('jaksam_inventory') == 'started' then Bridge.InventoryName = 'jaksam_inventory' end
     end
 
     Bridge.InventoryImagePath = ('%s/web/images/'):format(Bridge.InventoryName)
@@ -211,8 +212,8 @@ if not Bridge.Inventory and (GetResourceState('ox_inventory') == 'started' or Ge
     Bridge.Inventory = 'ox_inventory'
 end
 
--- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | ak47_qb_inventory | CODEM-INVENTORY | JPR-INVENTORY ❕
-if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-inventory') == 'started' or GetResourceState('lj-inventory') == 'started' or GetResourceState('aj-inventory') == 'started' or GetResourceState('ax-inventory') == 'started' or GetResourceState('ps-inventory') == 'started' or GetResourceState('ak47_qb_inventory') == 'started' or GetResourceState('codem-inventory') == 'started' or GetResourceState('l2s-inventory') == 'started' or GetResourceState('jpr-inventory') == 'started') then
+-- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | ak47_qb_inventory | CODEM-INVENTORY | JPR-INVENTORY | TXS-INVENTORY ❕
+if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-inventory') == 'started' or GetResourceState('lj-inventory') == 'started' or GetResourceState('aj-inventory') == 'started' or GetResourceState('ax-inventory') == 'started' or GetResourceState('ps-inventory') == 'started' or GetResourceState('ak47_qb_inventory') == 'started' or GetResourceState('codem-inventory') == 'started' or GetResourceState('l2s-inventory') == 'started' or GetResourceState('jpr-inventory') == 'started' or GetResourceState('txs-inventory') == 'started') then
     if not Bridge.InventoryName then
         if GetResourceState('qb-inventory') == 'started' then Bridge.InventoryName = 'qb-inventory' end
         if GetResourceState('lj-inventory') == 'started' then Bridge.InventoryName = 'lj-inventory' end
@@ -223,6 +224,7 @@ if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-i
         if GetResourceState('codem-inventory') == 'started' then Bridge.InventoryName = 'codem-inventory' end
         if GetResourceState('l2s-inventory') == 'started' then Bridge.InventoryName = 'l2s-inventory' end
         if GetResourceState('jpr-inventory') == 'started' then Bridge.InventoryName = 'jpr-inventory' end
+        if GetResourceState('txs-inventory') == 'started' then Bridge.InventoryName = 'txs-inventory' end
     end
     Bridge.InventoryImagePath = ('%s/html/images/'):format(Bridge.InventoryName)
 
