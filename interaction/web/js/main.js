@@ -1,3 +1,11 @@
+/*
+    https://github.com/Sleepless-Development/sleepless_interact
+
+    This file is licensed under LGPL-3.0 or higher <https://www.gnu.org/licenses/lgpl-3.0.en.html>
+
+    Copyright © 2025 DemiAutomatic <https://github.com/DemiAutomatic>
+*/
+
 import { createOptions } from "./createOptions.js";
 import { fetchNui } from "./fetchNui.js";
 import { onSelect } from "./controls.js";
