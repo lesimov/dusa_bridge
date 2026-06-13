@@ -6,7 +6,7 @@
  *
  * Usage in React apps:
  *   import { initTelemetry } from '@dusa_bridge/telemetry/nui/telemetry';
- *   initTelemetry({ resourceName: 'mechanic-spec' });
+ *   initTelemetry({ resourceName: 'dusa_mechanic' });
  *
  * Or copy this file to your web/src/utils/ folder and import from there.
  */
@@ -234,7 +234,7 @@ function createConsoleErrorInterceptor(): typeof console.error {
  * import { initTelemetry } from './telemetry';
  *
  * initTelemetry({
- *   resourceName: 'mechanic-spec',
+ *   resourceName: 'dusa_mechanic',
  *   maxErrorsPerMinute: 10,
  *   enableConsoleIntercept: true,
  * });

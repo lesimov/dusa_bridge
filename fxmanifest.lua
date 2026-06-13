@@ -5,7 +5,7 @@ lua54 'yes'
 game 'gta5'
 
 author 'Dusa'
-version '0.9.2'
+version '0.9.3'
 description 'Dusa Bridge'
 
 shared_scripts {
@@ -26,6 +26,10 @@ server_scripts {
     'telemetry/server/trace_integration.lua',
     'telemetry/server/degradation.lua',
     'telemetry/server/init.lua',
+    -- Debug map: live log store + browser dashboard (loaded after init)
+    'telemetry/server/logstore.lua',
+    'telemetry/server/catalog.lua',
+    'telemetry/server/http.lua',
 }
 
 client_scripts {
@@ -56,6 +60,12 @@ files {
     'telemetry/server/capture.lua',
     'telemetry/server/trace_integration.lua',
     'telemetry/server/degradation.lua',
+    'telemetry/server/logstore.lua',
+    'telemetry/server/catalog.lua',
+    'telemetry/server/http.lua',
+    -- Debug map dashboard + catalog snapshot (LoadResourceFile)
+    'telemetry/web/debug.html',
+    'telemetry/catalog/diagnostics.json',
     -- Telemetry client modules
     'telemetry/client/capture.lua',
     'telemetry/client/nui_bridge.lua',

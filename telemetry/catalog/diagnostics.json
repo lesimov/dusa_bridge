@@ -1,0 +1,180 @@
+{
+  "_comment": "Snapshot of the dusa_mechanic diagnostic registry (config/diagnostics.lua). Fallback used when dusa_mechanic is not started; live export data wins when it is. Regenerate this file when the registry changes.",
+  "registry": {
+    "LIFT_OWNERSHIP_TIMEOUT": {
+      "code": "LIFT_OWNERSHIP_TIMEOUT", "category": "LIFT", "severity": "ERROR",
+      "title": "Lift entity ownership could not be acquired",
+      "causes": ["The prop or vehicle is owned by another client and control did not migrate", "OneSync entity control migration lag under load", "OwnershipTimeoutMs budget too low for the server tick rate"],
+      "remediation": ["Raise MechanicConfig.Tow.OwnershipTimeoutMs (default 1000ms)", "Confirm the lift prop is networked (not a local-only cinematic prop)", "Check OneSync is enabled and the server is not overloaded"],
+      "tags": ["lift", "ownership", "network"]
+    },
+    "LIFT_NOT_NETWORKED": {
+      "code": "LIFT_NOT_NETWORKED", "category": "LIFT", "severity": "ERROR",
+      "title": "Lift entity is not networked and cinematic mode is disabled",
+      "causes": ["The prop was created locally (CreateObject without networking)", "MechanicConfig.Cinematic is false so local props are rejected"],
+      "remediation": ["Spawn the lift prop server-side / networked", "Enable MechanicConfig.Cinematic for local-only single-player style props"],
+      "tags": ["lift", "network", "prop"]
+    },
+    "LIFT_ID_UNREADABLE": {
+      "code": "LIFT_ID_UNREADABLE", "category": "LIFT", "severity": "WARN",
+      "title": "Lift id could not be read from the prop statebag",
+      "causes": ["Entity.state.liftId not replicated yet (joined before sync)", "Prop not present in GlobalState.mechanicLiftsData map"],
+      "remediation": ["Wait for the zones:refresh broadcast to populate lift data", "Re-run mechanic_db_check and verify ds_mechanic_lifts rows"],
+      "tags": ["lift", "statebag", "desync"]
+    },
+    "LIFT_PROP_NOT_FOUND": {
+      "code": "LIFT_PROP_NOT_FOUND", "category": "LIFT", "severity": "WARN",
+      "title": "Lift prop entity not found for the requested lift id",
+      "causes": ["Prop despawned or never spawned", "Entity registry missing the lift id"],
+      "remediation": ["Restart dusa_mechanic to respawn lift props", "Check LiftEntities registry population"],
+      "tags": ["lift", "prop", "entity"]
+    },
+    "LIFT_PROP_SPAWN_FAILED": {
+      "code": "LIFT_PROP_SPAWN_FAILED", "category": "LIFT", "severity": "ERROR",
+      "title": "Lift prop entity creation failed",
+      "causes": ["Model failed to load", "Entity creation timed out", "Invalid spawn coordinates"],
+      "remediation": ["Verify the lift model hash exists", "Check the spawn coords in ds_mechanic_lifts"],
+      "tags": ["lift", "prop", "spawn"]
+    },
+    "LIFT_MODEL_INVALID": {
+      "code": "LIFT_MODEL_INVALID", "category": "LIFT", "severity": "ERROR",
+      "title": "Lift model could not be resolved",
+      "causes": ["Model name not present in the lift config", "Missing asset/stream"],
+      "remediation": ["Add the model to config/config.lifts.lua", "Ensure the asset pack is started"],
+      "tags": ["lift", "model", "config"]
+    },
+    "TOW_OWNERSHIP_TIMEOUT": {
+      "code": "TOW_OWNERSHIP_TIMEOUT", "category": "TOW", "severity": "ERROR",
+      "title": "Tow target vehicle ownership could not be acquired",
+      "causes": ["Target vehicle owned by another client", "Control migration lag", "Previously surfaced misleadingly as \"no_target\""],
+      "remediation": ["Raise MechanicConfig.Tow.OwnershipTimeoutMs", "Have the target vehicle owner move closer / re-approach"],
+      "tags": ["tow", "ownership", "network"]
+    },
+    "TOW_BED_SPAWN_TIMEOUT": {
+      "code": "TOW_BED_SPAWN_TIMEOUT", "category": "TOW", "severity": "ERROR",
+      "title": "Flatbed bed prop did not exist after spawn",
+      "causes": ["CreateObjectNoOffset succeeded but entity never replicated", "Server overloaded"],
+      "remediation": ["Retry the bed action", "Check entity/OneSync health"],
+      "tags": ["tow", "bed", "spawn"]
+    },
+    "TOW_BED_OWNERSHIP_DESYNC": {
+      "code": "TOW_BED_OWNERSHIP_DESYNC", "category": "TOW", "severity": "WARN",
+      "title": "Flatbed and bed entity owners diverged",
+      "causes": ["Ownership of flatbed and bed prop did not converge before timeout"],
+      "remediation": ["Client self-heal should retry; if persistent, increase the sync timeout"],
+      "tags": ["tow", "bed", "ownership", "desync"]
+    },
+    "TOW_NPC_SPAWN_FAILED": {
+      "code": "TOW_NPC_SPAWN_FAILED", "category": "TOW", "severity": "WARN",
+      "title": "Tow job NPC failed to spawn",
+      "causes": ["CreatePed returned 0", "Ped model not loaded", "Population budget exhausted"],
+      "remediation": ["Verify the NPC model hash", "Check spawn point validity in the tow config"],
+      "tags": ["tow", "npc", "spawn"]
+    },
+    "DAMAGE_PLATE_LOCK_TIMEOUT": {
+      "code": "DAMAGE_PLATE_LOCK_TIMEOUT", "category": "DAMAGE", "severity": "ERROR",
+      "title": "Per-plate damage lock timed out",
+      "causes": ["Another operation held the plate lock too long", "Deadlock / stuck apply call"],
+      "remediation": ["Retry the service action", "Inspect concurrent servicing/damage operations on that plate"],
+      "tags": ["damage", "lock", "concurrency"]
+    },
+    "DAMAGE_APPLY_THREW": {
+      "code": "DAMAGE_APPLY_THREW", "category": "DAMAGE", "severity": "ERROR",
+      "title": "Damage apply function raised an error",
+      "causes": ["Unexpected data shape", "Nil index inside the apply path"],
+      "remediation": ["Read the attached err + stack trace", "Validate the vehicle/part payload"],
+      "tags": ["damage", "exception"]
+    },
+    "SERVICE_VEHICLE_DATA_MISSING": {
+      "code": "SERVICE_VEHICLE_DATA_MISSING", "category": "SERVICING", "severity": "ERROR",
+      "title": "Vehicle data missing during servicing recovery",
+      "causes": ["No row for the plate", "Vehicle never registered in service history"],
+      "remediation": ["Confirm the vehicle exists in ds_mechanic_service_history", "Re-scan the vehicle"],
+      "tags": ["servicing", "database"]
+    },
+    "DYNO_ANIM_DICT_TIMEOUT": {
+      "code": "DYNO_ANIM_DICT_TIMEOUT", "category": "DYNO", "severity": "WARN",
+      "title": "Dyno animation dictionary failed to load",
+      "causes": ["RequestAnimDict timed out", "Asset streaming stall"],
+      "remediation": ["Verify the anim dict name", "Check stream/asset pack availability"],
+      "tags": ["dyno", "anim", "asset"]
+    },
+    "DYNO_MODEL_INVALID": {
+      "code": "DYNO_MODEL_INVALID", "category": "DYNO", "severity": "ERROR",
+      "title": "Dyno prop model invalid or missing",
+      "causes": ["Bad model hash", "CD image / asset not present"],
+      "remediation": ["Verify the dyno model exists", "Ensure the dyno asset pack is started"],
+      "tags": ["dyno", "model", "asset"]
+    },
+    "DYNO_SPAWN_FAILED": {
+      "code": "DYNO_SPAWN_FAILED", "category": "DYNO", "severity": "ERROR",
+      "title": "Dyno prop spawn / freeze failed",
+      "causes": ["Collision not loaded", "Entity creation failed", "Vehicle freeze mismatch"],
+      "remediation": ["Retry on solid ground", "Check collision streaming near the dyno zone"],
+      "tags": ["dyno", "spawn", "freeze"]
+    },
+    "TUNING_PREVIEW_INIT_FAILED": {
+      "code": "TUNING_PREVIEW_INIT_FAILED", "category": "TUNING", "severity": "ERROR",
+      "title": "Tuning preview system failed to initialise",
+      "causes": ["Preview camera/scene setup returned false", "Vehicle entity invalid mid-init"],
+      "remediation": ["Re-enter the vehicle and reopen tuning", "Check the preview init path for nil vehicle"],
+      "tags": ["tuning", "preview", "ui"]
+    },
+    "TUNING_MODS_FETCH_FAILED": {
+      "code": "TUNING_MODS_FETCH_FAILED", "category": "TUNING", "severity": "WARN",
+      "title": "Available tuning mods could not be fetched",
+      "causes": ["GetAllAvailableMods returned nil", "Mod config not loaded"],
+      "remediation": ["Verify config.mods.lua loaded", "Reopen the tuning menu"],
+      "tags": ["tuning", "mods", "config"]
+    },
+    "ECU_INVALID_CURVE": {
+      "code": "ECU_INVALID_CURVE", "category": "ECU", "severity": "WARN",
+      "title": "ECU flash rejected — invalid curve data",
+      "causes": ["curvePoints not a table", "Wrong number of curve points (tamper or UI bug)"],
+      "remediation": ["Validate the curve payload length client-side", "Inspect the attached curve data"],
+      "tags": ["ecu", "validation", "flash"]
+    },
+    "ECU_UNOWNED_VEHICLE": {
+      "code": "ECU_UNOWNED_VEHICLE", "category": "ECU", "severity": "INFO",
+      "title": "ECU tuning attempted on an unowned vehicle",
+      "causes": ["Vehicle plate not owned", "ECU only allowed on owned vehicles"],
+      "remediation": ["Inform the player ECU tuning requires an owned vehicle"],
+      "tags": ["ecu", "ownership"]
+    },
+    "TRANSMISSION_HPATTERN_NOT_READY": {
+      "code": "TRANSMISSION_HPATTERN_NOT_READY", "category": "HPATTERN", "severity": "WARN",
+      "title": "H-pattern commit aborted — manual transmission client not ready",
+      "causes": ["ManualTransClient not initialised when commit fired", "Race during install/enable"],
+      "remediation": ["Re-enter the vehicle", "Confirm manual transmission is installed and enabled"],
+      "tags": ["transmission", "hpattern", "race"]
+    },
+    "DB_NOT_READY": {
+      "code": "DB_NOT_READY", "category": "DATABASE", "severity": "ERROR",
+      "title": "Database not ready in time during startup sync",
+      "causes": ["MechanicDatabaseReady not set within timeout", "oxmysql slow / migration running"],
+      "remediation": ["Check oxmysql connection + migration logs", "Run mechanic_db_check"],
+      "tags": ["database", "startup", "zones"]
+    },
+    "DB_QUERY_FAILED": {
+      "code": "DB_QUERY_FAILED", "category": "DATABASE", "severity": "ERROR",
+      "title": "A database query returned nil / failed",
+      "causes": ["Connection error", "Bad query or identifier format"],
+      "remediation": ["Inspect the oxmysql error", "Verify the table/columns exist"],
+      "tags": ["database", "query"]
+    },
+    "ITEM_NOT_REGISTERED": {
+      "code": "ITEM_NOT_REGISTERED", "category": "ITEMS", "severity": "ERROR",
+      "title": "A required inventory item is not registered",
+      "causes": ["Item (e.g. mechanic_bill) missing from the inventory resource"],
+      "remediation": ["Add the item to your inventory items config and restart it"],
+      "tags": ["items", "inventory", "config"]
+    },
+    "VEH_CONTROL_TIMEOUT": {
+      "code": "VEH_CONTROL_TIMEOUT", "category": "VEHICLE", "severity": "ERROR",
+      "title": "Network control of a vehicle could not be acquired",
+      "causes": ["Vehicle owned by another client", "Control migration lag (carjack, assembly, etc.)"],
+      "remediation": ["Retry closer to the vehicle", "Raise the relevant ownership timeout"],
+      "tags": ["vehicle", "ownership", "network"]
+    }
+  }
+}

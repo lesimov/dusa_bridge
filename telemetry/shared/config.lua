@@ -53,4 +53,14 @@ TelemetryConfig.Privacy = {
     MaxServerNameLength = 50,       -- Truncate long server names
 }
 
+-- Debug Map / live monitoring dashboard (local dev tool, independent of Sentry)
+-- Browser panel served at http://<ip>:30120/dusa_bridge/debug
+TelemetryConfig.DebugMap = {
+    Enabled = true,                 -- Master switch for the log store + HTTP dashboard
+    BufferSize = 5000,              -- Max log entries kept in the in-memory ring buffer
+    PageLimit = 1000,               -- Max entries returned per /debug/api/logs request
+    ReportEntries = 200,            -- Recent diag entries included in /debug/api/report
+    Token = '',                     -- If set, /debug/api/* requires ?token= or X-Debug-Token (empty = open, localhost dev)
+}
+
 return TelemetryConfig

@@ -281,6 +281,25 @@ Framework.IsPlayerDead = function(source)
     return (Player.PlayerData.metadata['isdead'] or Player.PlayerData.metadata['inlaststand'])
 end
 
+-- Returns true if the plate exists in the framework's owned-vehicles table.
+-- Used by consumer resources (e.g. dusa_mechanic) to skip persistence for
+-- admin /car spawns and other unowned entities. Errors fall back to true so
+-- transient DB issues never silently drop player data.
+Framework.IsVehicleOwned = function(plate)
+    if type(plate) ~= 'string' or plate == '' then return false end
+    local norm = plate:gsub('%s+', ''):upper()
+    local ok, result = pcall(Database.scalar, [[
+        SELECT 1 FROM player_vehicles
+        WHERE UPPER(REPLACE(plate, ' ', '')) = ?
+        LIMIT 1
+    ]], { norm })
+    if not ok then
+        Bridge.Debug('Framework', 'IsVehicleOwned query failed', tostring(result))
+        return true
+    end
+    return result ~= nil
+end
+
 Framework.CreateCallback(('%s:SpawnVehicle'):format(Bridge.Resource), function(source, cb, model, coords, warp)
     local netId = SpawnVehicle(source, model, coords, warp)
     if not netId or netId == 0 then cb(0) end
