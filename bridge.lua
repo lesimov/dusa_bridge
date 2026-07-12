@@ -100,7 +100,7 @@ end
 if not Bridge.Disabled['database'] and not Bridge.Database then
     print('[^1BRIDGE ERROR^0]')
     print(('^3%s^0'):format(
-    "No Compatible Database Resource Found. Please ensure you're using a supported database and that it's running before the bridge."))
+        "No Compatible Database Resource Found. Please ensure you're using a supported database and that it's running before the bridge."))
     return
 end
 
@@ -177,7 +177,7 @@ end
 if not Bridge.Disabled['framework'] and not Bridge.Framework then
     print('[^1BRIDGE ERROR^0]')
     print(('^3%s^0'):format(
-    "No Compatible Framework Resource Found. Please ensure you're using a supported framework and that it's running before the bridge."))
+        "No Compatible Framework Resource Found. Please ensure you're using a supported framework and that it's running before the bridge."))
     return
 end
 
@@ -208,8 +208,18 @@ if not Bridge.Inventory and (GetResourceState('ox_inventory') == 'started' or Ge
 
     Bridge.InventoryImagePath = ('%s/web/images/'):format(Bridge.InventoryName)
 
-    if GetResourceState('ak47_inventory') == 'started' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
+    if GetResourceState('ak47_inventory') == 'started' then
+        Bridge.InventoryImagePath = ('%s/web/build/images/'):format(
+            Bridge.InventoryName)
+    end
     Bridge.Inventory = 'ox_inventory'
+end
+
+-- ❕ ORIGEN_INVENTORY ❕
+if not Bridge.Inventory and GetResourceState('origen_inventory') == 'started' then
+    if not Bridge.InventoryName then Bridge.InventoryName = 'origen_inventory' end
+    Bridge.InventoryImagePath = ('%s/web/images/'):format(Bridge.InventoryName)
+    Bridge.Inventory = 'origen_inventory'
 end
 
 -- ❕ QB-INVENTORY | LJ-INVENTORY | AJ-INVENTORY | AX-INVENTORY | PS-INVENTORY | ak47_qb_inventory | CODEM-INVENTORY | JPR-INVENTORY | TXS-INVENTORY ❕
@@ -229,8 +239,14 @@ if not Bridge.Inventory and Bridge.Framework == 'qb' and (GetResourceState('qb-i
     Bridge.InventoryImagePath = ('%s/html/images/'):format(Bridge.InventoryName)
 
     -- Override Inventory Image Path for Codem
-    if GetResourceState('codem-inventory') == 'started' then Bridge.InventoryImagePath = ('%s/html/itemimages/'):format(Bridge.InventoryName) end
-    if GetResourceState('ak47_qb_inventory') == 'started' then Bridge.InventoryImagePath = ('%s/web/build/images/'):format(Bridge.InventoryName) end
+    if GetResourceState('codem-inventory') == 'started' then
+        Bridge.InventoryImagePath = ('%s/html/itemimages/'):format(
+            Bridge.InventoryName)
+    end
+    if GetResourceState('ak47_qb_inventory') == 'started' then
+        Bridge.InventoryImagePath = ('%s/web/build/images/')
+            :format(Bridge.InventoryName)
+    end
 
     Bridge.Inventory = 'qb-inventory'
 end
@@ -265,7 +281,7 @@ end
 if not Bridge.Disabled['inventory'] and not Bridge.Inventory then
     print('[^1BRIDGE ERROR^0]')
     print(('^3%s^0'):format(
-    "No Compatible Inventory Resource Found. Please ensure you're using a supported inventory and that it's running before the bridge."))
+        "No Compatible Inventory Resource Found. Please ensure you're using a supported inventory and that it's running before the bridge."))
     return
 end
 
@@ -314,7 +330,7 @@ end
 if not Bridge.Disabled['target'] and not Bridge.TargetName then
     print('[^1BRIDGE ERROR^0]')
     print(('^3%s^0'):format(
-    "No Compatible Target Resource Found. Please ensure you're using a supported target and that it's running before the bridge."))
+        "No Compatible Target Resource Found. Please ensure you're using a supported target and that it's running before the bridge."))
     return
 end
 -- ❗ ZONES DETECTION ❗
@@ -350,7 +366,7 @@ end
 if not Bridge.Disabled['zone'] and not Bridge.ZoneName then
     print('[^1BRIDGE ERROR^0]')
     print(('^3%s^0'):format(
-    "No Compatible Zone Resource Found. Please ensure you're using a supported zone resource and that it's running before the bridge."))
+        "No Compatible Zone Resource Found. Please ensure you're using a supported zone resource and that it's running before the bridge."))
     return
 end
 
