@@ -39,23 +39,8 @@ Framework.OpenStash = function(name)
 end
 
 Framework.OpenShop = function(name)
-    Framework.TriggerCallback(Bridge.Resource .. ':bridge:OpenShop', function(shopdata)
-        if table.type(shopdata) ~= 'empty' then
-            local Shop = {}
-            Shop.label = shopdata.name
-            Shop.items = {}
-            for i = 1, #shopdata.items do
-                Shop.items[i] = {
-                    name = shopdata.items[i].name,
-                    price = shopdata.items[i].price,
-                    amount = shopdata.items[i].count or 1,
-                    info = shopdata.items[i].metadata or {},
-                    type = Framework.Items[shopdata.items[i].name].type,
-                    slot = i
-                }
-            end
-            TriggerServerEvent("inventory:server:OpenInventory", "shop", shopdata.name, Shop)
-        end   
+    Framework.TriggerCallback(Bridge.Resource .. ':bridge:OpenShop', function(success)
+        -- Shop is opened server-side via tgiann-inventory's OpenShop export
     end, name)
 end
 
