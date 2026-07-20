@@ -432,17 +432,40 @@ local shops = {}
 Framework.RegisterShop = function(name, data)
     if shops[name] then return end
     shops[name] = data
-    tgiann_inventory:RegisterShop(name, data)
+
+    -- tgiann RegisterShop expects an items array only (name, amount, price, type)
+    local shopItems = {}
+    if data.items then
+        for i, item in ipairs(data.items) do
+            local itemDef = Framework.Items[item.name]
+            shopItems[i] = {
+                name = item.name,
+                amount = item.count or 1,
+                price = item.price,
+                type = item.type or (itemDef and itemDef.type) or 'item',
+            }
+        end
+    end
+
+    tgiann_inventory:RegisterShop(name, shopItems)
 end
 
 Framework.CreateCallback(Bridge.Resource .. ':bridge:OpenShop', function(source, cb, name)
-    if not shops[name] then cb({}) end
-    local isAllowed = false
+    if not shops[name] then return cb(false) end
+
     local Player = Framework.GetPlayer(source)
-    if shops[name].groups and Framework.HasJob(shops[name].groups, Player) then isAllowed = true end
-    if shops[name].groups and Framework.HasGang(shops[name].groups, Player) then isAllowed = true end
-    if type(shops[name].groups) == "table" and (shops[name].groups and not isAllowed) then cb({}) end
-    cb(shops[name])
+    if not Player then return cb(false) end
+
+    if shops[name].groups then
+        local isAllowed = false
+        if Framework.HasJob(shops[name].groups, Player) then isAllowed = true end
+        if Framework.HasGang(shops[name].groups, Player) then isAllowed = true end
+        if not isAllowed then return cb(false) end
+    end
+
+    -- Open server-side so it works with disableClientOpenInventory
+    tgiann_inventory:OpenShop(source, name)
+    cb(true)
 end)
 
 Framework.ConfiscateInventory = function(source)
