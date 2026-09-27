@@ -5,6 +5,7 @@ Framework.Player = {
     Name = nil,
     Firstname = nil,
     Lastname = nil,
+    Phone = nil,
     Job = {
         Name = nil,
         Label = nil,

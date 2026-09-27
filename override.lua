@@ -34,6 +34,9 @@ override = {}
 -- Override your framework prefix manually
 -- override.frameworkprefix = 'esx'
 
+-- Society banking provider
+override.societybanking = 'auto'
+
 -- Inventory you using
 -- override.inventory = 'ox_inventory'
 

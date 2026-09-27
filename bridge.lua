@@ -22,6 +22,7 @@ Bridge.Zone = nil
 Bridge.ZoneName = nil
 Bridge.Database = nil
 Bridge.DatabaseName = nil
+Bridge.SocietyBanking = nil
 Bridge.Menu = nil
 lib = lib
 
@@ -181,22 +182,196 @@ if not Bridge.Disabled['framework'] and not Bridge.Framework then
     return
 end
 
--- ❗ INVENTORY DETECTION ❗
+-- ❗ SOCIETY BANKING DETECTION ❗
+local societyBanking = override?.societybanking or 'auto'
 
+if societyBanking == 'auto' then
+    local candidates = {
+        'okokBanking',
+        'fd_banking',
+        'tgg-banking',
+        'wasabi_banking',
+        'snipe-banking',
+        'Renewed-Banking',
+        'qb-banking'
+    }
+
+    if Bridge.Framework == 'qb' then
+        candidates[#candidates + 1] = 'qb-management'
+    elseif Bridge.Framework == 'qbox' then
+        candidates[#candidates + 1] = 'qbx_management'
+    elseif Bridge.Framework == 'esx' then
+        candidates[#candidates + 1] = 'esx_addonaccount'
+    end
+
+    for i = 1, #candidates do
+        if GetResourceState(candidates[i]) == 'started' then
+            societyBanking = candidates[i]
+            break
+        end
+    end
+end
+
+if societyBanking ~= 'auto' then
+    Bridge.SocietyBanking = societyBanking
+end
+
+if Bridge.Context == 'server' then
+    local function moneyValue(value)
+        if type(value) == 'table' then
+            value = value.account_balance or value.balance or value.money or value.amount
+        end
+
+        if type(value) ~= 'number' and type(value) ~= 'string' then return 0 end
+        value = tonumber(value)
+        if not value or value ~= value or value == math.huge or value == -math.huge then return 0 end
+        return value
+    end
+
+    local function validAmount(amount)
+        if type(amount) ~= 'number' and type(amount) ~= 'string' then return nil end
+        amount = tonumber(amount)
+        if not amount or amount <= 0 or amount ~= amount or amount == math.huge then return nil end
+        return amount
+    end
+
+    local function addonAccount(name)
+        local accountName = ('society_%s'):format(name)
+        local ok, account = pcall(function()
+            return exports['esx_addonaccount']:GetSharedAccount(accountName)
+        end)
+        if ok and account then return account end
+
+        local p = promise.new()
+        TriggerEvent('esx_addonaccount:getSharedAccount', accountName, function(value)
+            p:resolve(value or false)
+        end)
+        return Citizen.Await(p)
+    end
+
+    local function providerGetMoney(name, accountType)
+        local banking = Bridge.SocietyBanking
+
+        if banking == 'okokBanking' then
+            return exports['okokBanking']:GetAccount(name)
+        elseif banking == 'fd_banking' then
+            if accountType == 'gang' then return exports['fd_banking']:GetGangAccount(name) end
+            return exports['fd_banking']:GetAccount(name)
+        elseif banking == 'tgg-banking' then
+            return exports['tgg-banking']:GetSocietyAccountMoney(name)
+        elseif banking == 'wasabi_banking' then
+            return exports['wasabi_banking']:GetAccountBalance(name, 'society')
+        elseif banking == 'snipe-banking' then
+            return exports['snipe-banking']:GetAccountBalance(name)
+        elseif banking == 'Renewed-Banking' then
+            return exports['Renewed-Banking']:getAccountMoney(name)
+        elseif banking == 'qb-banking' then
+            return exports['qb-banking']:GetAccountBalance(name)
+        elseif banking == 'qb-management' or banking == 'qbx_management' then
+            if accountType == 'gang' then return exports[banking]:GetGangAccount(name) end
+            return exports[banking]:GetAccount(name)
+        elseif banking == 'esx_addonaccount' then
+            return addonAccount(name)?.money
+        end
+
+        return false
+    end
+
+    local function providerMutate(action, name, accountType, amount)
+        local banking = Bridge.SocietyBanking
+
+        if banking == 'okokBanking' then
+            if action == 'add' then return exports['okokBanking']:AddMoney(name, amount) end
+            return exports['okokBanking']:RemoveMoney(name, amount)
+        elseif banking == 'fd_banking' then
+            if accountType == 'gang' then
+                if action == 'add' then return exports['fd_banking']:AddGangMoney(name, amount) end
+                return exports['fd_banking']:RemoveGangMoney(name, amount)
+            end
+            if action == 'add' then return exports['fd_banking']:AddMoney(name, amount) end
+            return exports['fd_banking']:RemoveMoney(name, amount)
+        elseif banking == 'tgg-banking' then
+            if action == 'add' then return exports['tgg-banking']:AddSocietyMoney(name, amount) end
+            return exports['tgg-banking']:RemoveSocietyMoney(name, amount)
+        elseif banking == 'wasabi_banking' then
+            if action == 'add' then return exports['wasabi_banking']:AddMoney('society', name, amount) end
+            return exports['wasabi_banking']:RemoveMoney('society', name, amount)
+        elseif banking == 'snipe-banking' then
+            if action == 'add' then return exports['snipe-banking']:AddMoneyToAccount(name, amount) end
+            return exports['snipe-banking']:RemoveMoneyFromAccount(name, amount)
+        elseif banking == 'Renewed-Banking' then
+            if action == 'add' then return exports['Renewed-Banking']:addAccountMoney(name, amount) end
+            return exports['Renewed-Banking']:removeAccountMoney(name, amount)
+        elseif banking == 'qb-banking' then
+            if action == 'add' then return exports['qb-banking']:AddMoney(name, amount) end
+            return exports['qb-banking']:RemoveMoney(name, amount)
+        elseif banking == 'qb-management' or banking == 'qbx_management' then
+            if accountType == 'gang' then
+                if action == 'add' then return exports[banking]:AddGangMoney(name, amount) end
+                return exports[banking]:RemoveGangMoney(name, amount)
+            end
+            if action == 'add' then
+                exports[banking]:AddMoney(name, amount)
+                return true
+            end
+            return exports[banking]:RemoveMoney(name, amount)
+        elseif banking == 'esx_addonaccount' then
+            local account = addonAccount(name)
+            if not account then return false end
+            if action == 'add' then account.addMoney(amount) else account.removeMoney(amount) end
+            return true
+        end
+
+        return false
+    end
+
+    Bridge.SocietyBankingGetMoney = function(name, accountType)
+        local banking = Bridge.SocietyBanking
+        if type(name) ~= 'string' or name == '' or not banking or GetResourceState(banking) ~= 'started' then return 0 end
+
+        local ok, value = pcall(providerGetMoney, name, accountType)
+        return ok and moneyValue(value) or 0
+    end
+
+    Bridge.SocietyBankingAddMoney = function(name, accountType, amount)
+        amount = validAmount(amount)
+        if not amount or type(name) ~= 'string' or name == '' then return false end
+        local banking = Bridge.SocietyBanking
+        if not banking or GetResourceState(banking) ~= 'started' then return false end
+
+        local ok, result = pcall(providerMutate, 'add', name, accountType, amount)
+        return ok and result ~= false
+    end
+
+    Bridge.SocietyBankingRemoveMoney = function(name, accountType, amount)
+        amount = validAmount(amount)
+        if not amount or type(name) ~= 'string' or name == '' then return false end
+        local banking = Bridge.SocietyBanking
+        if not banking or GetResourceState(banking) ~= 'started' then return false end
+        if Bridge.SocietyBankingGetMoney(name, accountType) < amount then return false end
+
+        local ok, result = pcall(providerMutate, 'remove', name, accountType, amount)
+        return ok and result ~= false
+    end
+end
+ 
+-- ❗ INVENTORY DETECTION ❗
+ 
 -- ❕ OVERRIDE INVENTORY ❕
 if override?.inventory then
     Bridge.Inventory = override?.inventory
 end
-
+ 
 -- ❕ OVERRIDE INVENTORY NAME ❕
 if override?.inventoryname then
     Bridge.InventoryName = override?.inventoryname
 end
-
+ 
 -- ❕ OVERRIDE INVENTORY PATH ❕
 if override?.imagepath then
     Bridge.InventoryImagePath = override?.imagepath
 end
+
 
 -- ❕ OX_INVENTORY ❕
 if not Bridge.Inventory and (GetResourceState('ox_inventory') == 'started' or GetResourceState('ak47_inventory') == 'started' or GetResourceState('jaksam_inventory') == 'started') then
@@ -286,10 +461,12 @@ if not Bridge.Disabled['inventory'] and not Bridge.Inventory then
 end
 
 -- ❗ TARGET DETECTION ❗
+local targetConfigured = override?.target ~= nil or override?.targetname ~= nil
 
 -- ❕ OVERRIDE TARGET ❕
 if override?.target then
     Bridge.Target = override?.target
+    if not Bridge.TargetName then Bridge.TargetName = override?.target end
 end
 
 -- ❕ OVERRIDE TARGET NAME ❕
@@ -327,11 +504,16 @@ end
 --     Bridge.Target = 'target'
 -- end
 
-if not Bridge.Disabled['target'] and not Bridge.TargetName then
+if not Bridge.Disabled['target'] and targetConfigured
+    and (not Bridge.Target or not Bridge.TargetName or GetResourceState(Bridge.TargetName) == 'missing') then
     print('[^1BRIDGE ERROR^0]')
     print(('^3%s^0'):format(
-        "No Compatible Target Resource Found. Please ensure you're using a supported target and that it's running before the bridge."))
+        "The Configured Target Resource Is Missing. Please check override.target and override.targetname."))
     return
+end
+
+if not Bridge.Disabled['target'] and not Bridge.Target then
+    Bridge.Disabled['target'] = true
 end
 -- ❗ ZONES DETECTION ❗
 

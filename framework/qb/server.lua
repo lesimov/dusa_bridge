@@ -232,6 +232,94 @@ Framework.GetPlayerByIdentifier = function(identifier)
     return Framework.GetPlayer(QBCore.Functions.GetPlayerByCitizenId(identifier)?.PlayerData?.source)
 end
 
+local function decodeObject(value)
+    if type(value) == 'table' then return value end
+    if type(value) ~= 'string' or value == '' then return {} end
+    local ok, decoded = pcall(json.decode, value)
+    return ok and type(decoded) == 'table' and decoded or {}
+end
+
+Framework.GetPlayersByJob = function(jobName)
+    if type(jobName) ~= 'string' or jobName == '' then return {} end
+
+    local rows = Database.query([[
+        SELECT `citizenid`, `name`, `charinfo`, `job`
+        FROM `players`
+        WHERE JSON_UNQUOTE(JSON_EXTRACT(`job`, '$.name')) = ?
+    ]], { jobName }) or {}
+    local employees = {}
+    local jobDefinition = QBCore.Shared.Jobs[jobName] or {}
+
+    for i = 1, #rows do
+        local row = rows[i]
+        local charinfo = decodeObject(row.charinfo)
+        local job = decodeObject(row.job)
+        local grade = job.grade or {}
+        local level = tonumber(grade.level) or 0
+        local gradeDefinition = (jobDefinition.grades or {})[tostring(level)]
+            or (jobDefinition.grades or {})[level] or {}
+        local firstname = charinfo.firstname or ''
+        local lastname = charinfo.lastname or ''
+        local employee = {
+            Identifier = row.citizenid,
+            Name = row.name or (firstname .. ' ' .. lastname),
+            Firstname = firstname,
+            Lastname = lastname,
+            Job = {
+                Name = jobName,
+                Label = job.label or jobDefinition.label or jobName,
+                Duty = false,
+                Boss = job.isboss == true or grade.isboss == true or gradeDefinition.isboss == true,
+                Grade = {
+                    Name = grade.name or gradeDefinition.name or tostring(level),
+                    Level = level
+                }
+            }
+        }
+
+        local online = QBCore.Functions.GetPlayerByCitizenId(row.citizenid)
+        if online then
+            employee.source = online.PlayerData.source
+            local player = Framework.GetPlayer(employee.source)
+            if player then
+                employee.Name = player.Name or employee.Name
+                employee.Firstname = player.Firstname or employee.Firstname
+                employee.Lastname = player.Lastname or employee.Lastname
+                employee.Job = player.Job
+            end
+        end
+
+        employees[#employees + 1] = employee
+    end
+
+    return employees
+end
+
+Framework.GetOwnedVehicles = function(identifier)
+    if type(identifier) ~= 'string' or identifier == '' then return {} end
+
+    local rows = Database.query([[
+        SELECT `id`, `plate`, `vehicle`, `mods`
+        FROM `player_vehicles`
+        WHERE `citizenid` = ?
+    ]], { identifier }) or {}
+    local vehicles = {}
+
+    for i = 1, #rows do
+        local row = rows[i]
+        local properties = decodeObject(row.mods)
+        vehicles[#vehicles + 1] = {
+            id = row.id or row.plate,
+            plate = row.plate,
+            model = row.vehicle or properties.model,
+            properties = properties,
+            type = 'automobile'
+        }
+    end
+
+    return vehicles
+end
+
 Framework.DoesJobExist = function(job, grade)
     grade = tostring(grade)
     if job and grade then
@@ -265,49 +353,44 @@ Framework.DoesGangExist = function(gang, grade)
 end
 
 Framework.RegisterSociety = function(name, type)
-    if not resource.missing('qb-banking') then return end
     if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return end
-    if type == 'job' then type = 'boss' end
-    local management_funds = Database.scalar('SELECT `job_name` FROM `management_funds` WHERE `job_name` = ?', { name })
-    if not management_funds then
-        Database.insert('INSERT INTO `management_funds` (`job_name`, `amount`, `type`) VALUES (?, ?, ?)', { name, 0, type })
+
+    if Bridge.SocietyBanking == 'qb-banking' then
+        local ok, account = pcall(function() return exports['qb-banking']:GetAccount(name) end)
+        if ok and not account then
+            pcall(function()
+                if type == 'gang' then
+                    exports['qb-banking']:CreateGangAccount(name, 0)
+                else
+                    exports['qb-banking']:CreateJobAccount(name, 0)
+                end
+            end)
+        end
+        return
+    end
+
+    if Bridge.SocietyBanking ~= 'qb-management' and Bridge.SocietyBanking ~= 'qbx_management' then return end
+    local accountType = type == 'job' and 'boss' or 'gang'
+    local managementFunds = Database.scalar('SELECT `job_name` FROM `management_funds` WHERE `job_name` = ?', { name })
+    if not managementFunds then
+        Database.insert('INSERT INTO `management_funds` (`job_name`, `amount`, `type`) VALUES (?, ?, ?)',
+            { name, 0, accountType })
     end
 end
 
 Framework.SocietyGetMoney = function(name, type)
     if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return 0 end
-    if not resource.missing('qb-banking') then return exports['qb-banking']:GetAccountBalance(name) end
-    if type == "job" then
-        return exports['qb-management']:GetAccount(name)
-    elseif type == "gang" then
-        return exports['qb-management']:GetGangAccount(name)
-    end
-    return 0
+    return Bridge.SocietyBankingGetMoney(name, type)
 end
 
 Framework.SocietyAddMoney = function(name, type, amount)
     if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return false end
-    if amount < 0 or amount == 0 then return false end
-    if not resource.missing('qb-banking') then return exports['qb-banking']:AddMoney(name, amount) end
-    if type == "job" then
-        exports['qb-management']:AddMoney(name, amount)
-        return true
-    elseif type == "gang" then
-        exports['qb-management']:AddGangMoney(name, amount)
-        return true
-    end
-    return false
+    return Bridge.SocietyBankingAddMoney(name, type, amount)
 end
 
 Framework.SocietyRemoveMoney = function(name, type, amount)
     if type ~= 'job' and type ~= 'gang' then error('Society Type Must Be Job Or Gang', 0) return false end
-    if not resource.missing('qb-banking') then return exports['qb-banking']:RemoveMoney(name, amount) end
-    if type == "job" then
-        return exports['qb-management']:RemoveMoney(name, amount)
-    elseif type == "gang" then
-        return exports['qb-management']:RemoveGangMoney(name, amount)
-    end
-    return false
+    return Bridge.SocietyBankingRemoveMoney(name, type, amount)
 end
 
 Framework.Notify = function(source, message, type, length)

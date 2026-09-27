@@ -314,6 +314,93 @@ Framework.GetPlayerByIdentifier = function(identifier)
     return Framework.GetPlayer(ESX.GetPlayerFromIdentifier(identifier)?.source)
 end
 
+local function decodeObject(value)
+    if type(value) == 'table' then return value end
+    if type(value) ~= 'string' or value == '' then return {} end
+    local ok, decoded = pcall(json.decode, value)
+    return ok and type(decoded) == 'table' and decoded or {}
+end
+
+Framework.GetPlayersByJob = function(jobName)
+    if type(jobName) ~= 'string' or jobName == '' then return {} end
+
+    local rows = Database.query([[
+        SELECT `identifier`, `firstname`, `lastname`, `job_grade`
+        FROM `users`
+        WHERE `job` = ?
+    ]], { jobName }) or {}
+    local employees = {}
+    local jobDefinition = Framework.GetJob(jobName) or {}
+
+    for i = 1, #rows do
+        local row = rows[i]
+        local level = tonumber(row.job_grade) or 0
+        local grade = (jobDefinition.grades or {})[tostring(level)]
+            or (jobDefinition.grades or {})[level] or {}
+        local firstname = row.firstname or ''
+        local lastname = row.lastname or ''
+        local employee = {
+            Identifier = row.identifier,
+            Name = firstname .. ' ' .. lastname,
+            Firstname = firstname,
+            Lastname = lastname,
+            Job = {
+                Name = jobName,
+                Label = jobDefinition.label or jobName,
+                Duty = false,
+                Boss = grade.isboss == true,
+                Grade = {
+                    Name = grade.name or tostring(level),
+                    Level = level
+                }
+            }
+        }
+
+        local online = ESX.GetPlayerFromIdentifier(row.identifier)
+        if online then
+            employee.source = online.source
+            local player = Framework.GetPlayer(online.source)
+            if player then
+                employee.Name = player.Name or employee.Name
+                employee.Firstname = player.Firstname or employee.Firstname
+                employee.Lastname = player.Lastname or employee.Lastname
+                employee.Job = player.Job
+            end
+        end
+
+        employees[#employees + 1] = employee
+    end
+
+    return employees
+end
+
+Framework.GetOwnedVehicles = function(identifier)
+    if type(identifier) ~= 'string' or identifier == '' then return {} end
+
+    local rows = Database.query([[
+        SELECT `plate`, `vehicle`, `type`
+        FROM `owned_vehicles`
+        WHERE `owner` = ?
+    ]], { identifier }) or {}
+    local vehicles = {}
+
+    for i = 1, #rows do
+        local row = rows[i]
+        local properties = decodeObject(row.vehicle)
+        local vehicleType = row.type
+        if not vehicleType or vehicleType == 'car' then vehicleType = 'automobile' end
+        vehicles[#vehicles + 1] = {
+            id = row.plate,
+            plate = row.plate,
+            model = properties.model,
+            properties = properties,
+            type = vehicleType
+        }
+    end
+
+    return vehicles
+end
+
 Framework.DoesJobExist = function(job, grade)
     return ESX.DoesJobExist(job, grade)
 end
@@ -414,26 +501,38 @@ Framework.RegisterSociety = function(name, type)
         error('Society Type Must Be Job Or Gang', 0)
         return
     end
-    local society_data_name = ('society_%s'):format(name)
 
-    Database.scalar('SELECT `name` FROM `addon_account` WHERE `name` = ?', { society_data_name }, function(addon_account)
-        if not addon_account then
-            Database.insert('INSERT IGNORE INTO `addon_account` (`name`, `label`, `shared`) VALUES (?, ?, ?)',
-                { society_data_name, Framework.FirstToUpper(name), 1 })
+    local societyName = ('society_%s'):format(name)
+
+    if Bridge.SocietyBanking == 'qb-banking' then
+        local ok, account = pcall(function() return exports['qb-banking']:GetAccount(name) end)
+        if ok and not account then
+            pcall(function()
+                if type == 'gang' then
+                    exports['qb-banking']:CreateGangAccount(name, 0)
+                else
+                    exports['qb-banking']:CreateJobAccount(name, 0)
+                end
+            end)
         end
-    end)
+    elseif Bridge.SocietyBanking == 'esx_addonaccount' then
+        local addonAccount = Database.scalar('SELECT `name` FROM `addon_account` WHERE `name` = ?', { societyName })
+        if not addonAccount then
+            Database.insert('INSERT IGNORE INTO `addon_account` (`name`, `label`, `shared`) VALUES (?, ?, ?)',
+                { societyName, Framework.FirstToUpper(name), 1 })
+        end
 
-    Database.scalar('SELECT `account_name` FROM `addon_account_data` WHERE `account_name` = ?', { society_data_name },
-        function(addon_account_data)
-            if not addon_account_data then
-                Database.insert('INSERT IGNORE INTO `addon_account_data` (`account_name`, `money`) VALUES (?, ?)',
-                    { society_data_name, 0 })
-            end
-        end)
+        local accountData = Database.scalar(
+            'SELECT `account_name` FROM `addon_account_data` WHERE `account_name` = ?', { societyName })
+        if not accountData then
+            Database.insert('INSERT IGNORE INTO `addon_account_data` (`account_name`, `money`) VALUES (?, ?)',
+                { societyName, 0 })
+        end
+        TriggerEvent('esx_addonaccount:refreshAccounts')
+    end
 
-    TriggerEvent('esx_addonaccount:refreshAccounts')
-    TriggerEvent('esx_society:registerSociety', name, Framework.FirstToUpper(name), society_data_name, society_data_name,
-        society_data_name, { type = 'public' })
+    TriggerEvent('esx_society:registerSociety', name, Framework.FirstToUpper(name), societyName, societyName,
+        societyName, { type = 'public' })
 end
 
 Framework.SocietyGetMoney = function(name, type)
@@ -441,12 +540,7 @@ Framework.SocietyGetMoney = function(name, type)
         error('Society Type Must Be Job Or Gang', 0)
         return 0
     end
-    local p = promise.new()
-    local society_name = ('society_%s'):format(name)
-    TriggerEvent('esx_addonaccount:getSharedAccount', society_name, function(account)
-        p:resolve(account.money)
-    end)
-    return Citizen.Await(p)
+    return Bridge.SocietyBankingGetMoney(name, type)
 end
 
 Framework.SocietyAddMoney = function(name, type, amount)
@@ -454,17 +548,7 @@ Framework.SocietyAddMoney = function(name, type, amount)
         error('Society Type Must Be Job Or Gang', 0)
         return false
     end
-    local p = promise.new()
-    local society_name = ('society_%s'):format(name)
-    TriggerEvent('esx_addonaccount:getSharedAccount', society_name, function(account)
-        if account and amount > 0 then
-            account.addMoney(amount)
-            p:resolve(true)
-        else
-            p:resolve(false)
-        end
-    end)
-    return Citizen.Await(p)
+    return Bridge.SocietyBankingAddMoney(name, type, amount)
 end
 
 Framework.SocietyRemoveMoney = function(name, type, amount)
@@ -472,17 +556,7 @@ Framework.SocietyRemoveMoney = function(name, type, amount)
         error('Society Type Must Be Job Or Gang', 0)
         return false
     end
-    local p = promise.new()
-    local society_name = ('society_%s'):format(name)
-    TriggerEvent('esx_addonaccount:getSharedAccount', society_name, function(account)
-        if account and amount > 0 and account.money >= amount then
-            account.removeMoney(amount)
-            p:resolve(true)
-        else
-            p:resolve(false)
-        end
-    end)
-    return Citizen.Await(p)
+    return Bridge.SocietyBankingRemoveMoney(name, type, amount)
 end
 
 Framework.Notify = function(source, message, type, length)
