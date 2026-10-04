@@ -199,34 +199,96 @@ Framework.GetPlayerByIdentifier = function(identifier)
     return Framework.GetPlayer(exports[Bridge.FrameworkName]:GetPlayerByCitizenId(identifier)?.PlayerData?.source)
 end
 
-Framework.CreditReady = function()
-    local ok, ready, reason = pcall(function()
-        return exports[Bridge.FrameworkName]:CreditReady()
-    end)
+Framework.PaymentReady = function()
+    if GetResourceState(Bridge.FrameworkName) ~= 'started' then
+        return false, 'provider_unavailable'
+    end
 
-    if not ok then return false, 'provider_unavailable' end
-    if ready ~= true then return false, reason or 'provider_not_ready' end
+    local ok, players = pcall(function()
+        return exports[Bridge.FrameworkName]:GetQBPlayers()
+    end)
+    if not ok then return false, 'provider_read_failed' end
+    if type(players) ~= 'table' then return false, 'invalid_provider_response' end
     return true
 end
 
-Framework.CreditOnce = function(receiptId, identifier, account, amount)
-    local ok, result = pcall(function()
-        return exports[Bridge.FrameworkName]:CreditOnce(receiptId, identifier, account, amount)
-    end)
-
-    if not ok then
-        return { status = 'unavailable', reason = 'provider_unavailable' }
-    end
-    if type(result) ~= 'table'
-        or (result.status ~= 'paid'
-            and result.status ~= 'pending'
-            and result.status ~= 'conflict'
-            and result.status ~= 'unavailable')
+-- Not idempotent: the caller must durably claim the receipt before invoking.
+-- A successful Save only requests Qbox's asynchronous persistence, not a commit.
+Framework.PayPlayer = function(receiptId, identifier, account, amount)
+    if type(receiptId) ~= 'string' or receiptId == '' or #receiptId > 96
+        or receiptId:find('%c')
+        or type(identifier) ~= 'string' or identifier == '' or #identifier > 80
+        or identifier:find('%c')
+        or (account ~= 'cash' and account ~= 'bank')
+        or type(amount) ~= 'number' or amount ~= amount
+        or amount <= 0 or amount > 1000000 or amount % 1 ~= 0
     then
-        return { status = 'unavailable', reason = 'invalid_provider_response' }
+        return { status = 'rejected', reason = 'invalid_payment' }
     end
 
-    return result
+    local function failure(status, reason, detail)
+        print(('[dusa_bridge] Qbox payment receipt=%s citizenid=%s account=%s amount=%s: %s (%s). %s'):format(
+            receiptId, identifier, account, amount, reason, tostring(detail),
+            status == 'review'
+                and 'Money may have changed; inspect Qbox money logs and the Chop Shop delivery journal before manual reconciliation. Do not automatically retry.'
+                or 'No credit accepted; check Qbox availability, account configuration and money hooks.'))
+        return { status = status, reason = reason }
+    end
+
+    local ready, reason = Framework.PaymentReady()
+    if not ready then return { status = 'deferred', reason = reason } end
+
+    local ok, player = pcall(function()
+        return exports[Bridge.FrameworkName]:GetPlayerByCitizenId(identifier)
+    end)
+    if not ok then return failure('deferred', 'player_lookup_failed', player) end
+    if player == nil then return { status = 'deferred', reason = 'player_offline' } end
+    if type(player) ~= 'table' or type(player.PlayerData) ~= 'table' then
+        return failure('deferred', 'invalid_player_response', 'GetPlayerByCitizenId returned malformed data')
+    end
+    if player.PlayerData.citizenid ~= identifier then
+        return failure('rejected', 'player_identity_mismatch', 'GetPlayerByCitizenId returned another citizen')
+    end
+    local source = player.PlayerData.source
+    if player.Offline or type(source) ~= 'number' or source <= 0 or source % 1 ~= 0 then
+        return { status = 'deferred', reason = 'player_offline' }
+    end
+    if type(player.PlayerData.money) ~= 'table' or type(player.PlayerData.money[account]) ~= 'number' then
+        return failure('rejected', 'invalid_money_account', 'Online player has no numeric balance for this account')
+    end
+
+    local function currentPlayer()
+        local current = exports[Bridge.FrameworkName]:GetPlayer(source)
+        return type(current) == 'table' and not current.Offline
+            and type(current.PlayerData) == 'table'
+            and current.PlayerData.citizenid == identifier
+            and current.PlayerData.source == source
+    end
+    local online
+    ok, online = pcall(currentPlayer)
+    if not ok then return failure('deferred', 'player_lookup_failed', online) end
+    if not online then return { status = 'deferred', reason = 'player_session_changed' } end
+
+    -- Use the online source, never a citizen ID that could resolve an offline player.
+    local accepted
+    ok, accepted = pcall(function()
+        return exports[Bridge.FrameworkName]:AddMoney(source, account, amount, receiptId)
+    end)
+    if not ok then return failure('review', 'add_money_exception', accepted) end
+    if accepted == false then return failure('rejected', 'add_money_rejected', 'AddMoney returned false') end
+    if accepted ~= true then return failure('review', 'invalid_add_money_response', accepted) end
+
+    local saved
+    ok, saved = pcall(function()
+        if not currentPlayer() then error('Player session changed after AddMoney') end
+        return exports[Bridge.FrameworkName]:Save(source)
+    end)
+    if not ok then return failure('review', 'save_request_failed', saved) end
+    -- Stock Save returns nil; tolerate an explicit success, never a failure/unknown result.
+    if saved ~= nil and saved ~= true then
+        return failure('review', 'invalid_save_response', saved)
+    end
+    return { status = 'paid' }
 end
 
 local function decodeObject(value)
