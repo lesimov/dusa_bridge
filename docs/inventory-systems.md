@@ -56,8 +56,14 @@ end
 - **Image Path**: `ps-inventory/html/images/`
 
 ### AK47 Inventory
-- **Resource Name**: `ak47_inventory`
-- **Image Path**: `ak47_inventory/html/images/`
+- **Resource Name**: `ak47_inventory` (also used by `ak47_qb_inventory` builds that register their exports under `ak47_inventory`)
+- **Image Path**: `ak47_inventory/web/build/images/`
+- **Adapter**: `inventory/ox_inventory`. ox-style alias exports are tried first; when the build does not provide them (QB build: "No such export openInventory"), the adapter falls back to ak47's native exports (`OpenInventory`, `CloseInventory`, `GetAmount`, `CanAddItem`, `CreateShop`, `CreateInventory`).
+- **Native-fallback limits**: group-restricted shops and owner-scoped stashes are refused with a console message instead of being opened publicly.
+- **Regression test**: `lua5.4 tests/ak47_bridge/run.lua .`
+
+### AK47 Banking (society accounts)
+- **Resource Name**: `ak47_banking` — auto-detected for `Framework.SocietyGetMoney/AddMoney/RemoveMoney` via `GetAccountBalance`, `AddMoney`, `RemoveMoney` (account name = job/gang name).
 
 ### Codem Inventory
 - **Resource Name**: `codem-inventory`

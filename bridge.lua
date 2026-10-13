@@ -193,6 +193,7 @@ if societyBanking == 'auto' then
         'wasabi_banking',
         'snipe-banking',
         'Renewed-Banking',
+        'ak47_banking',
         'qb-banking'
     }
 
@@ -265,6 +266,10 @@ if Bridge.Context == 'server' then
             return exports['snipe-banking']:GetAccountBalance(name)
         elseif banking == 'Renewed-Banking' then
             return exports['Renewed-Banking']:getAccountMoney(name)
+        elseif banking == 'ak47_banking' then
+            -- Job, gang and shared accounts share one name-keyed API.
+            -- https://docs.menanak47.com/multi-framework/ak47_banking/exports/server
+            return exports['ak47_banking']:GetAccountBalance(name)
         elseif banking == 'qb-banking' then
             return exports['qb-banking']:GetAccountBalance(name)
         elseif banking == 'qb-management' or banking == 'qbx_management' then
@@ -302,6 +307,9 @@ if Bridge.Context == 'server' then
         elseif banking == 'Renewed-Banking' then
             if action == 'add' then return exports['Renewed-Banking']:addAccountMoney(name, amount) end
             return exports['Renewed-Banking']:removeAccountMoney(name, amount)
+        elseif banking == 'ak47_banking' then
+            if action == 'add' then return exports['ak47_banking']:AddMoney(name, amount, 'dusa_bridge') end
+            return exports['ak47_banking']:RemoveMoney(name, amount, 'dusa_bridge')
         elseif banking == 'qb-banking' then
             if action == 'add' then return exports['qb-banking']:AddMoney(name, amount) end
             return exports['qb-banking']:RemoveMoney(name, amount)
