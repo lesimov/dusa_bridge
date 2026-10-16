@@ -128,7 +128,7 @@ AddEventHandler(Bridge.FrameworkPrefix .. ':setJob', function()
 end)
 
 
-AddEventHandler(Bridge.FrameworkPrefix .. ':setDuty', function(bool)
+RegisterNetEvent(Bridge.FrameworkPrefix .. ':setDuty', function(bool)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
     if xPlayer.get('duty') == bool then return end
