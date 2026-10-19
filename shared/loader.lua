@@ -25,21 +25,25 @@ module = function(path)
 end
 
 ---Module Loader From Other Resources
+---The chunk is named '@@<resource>/<path>.lua' like FiveM's own loader; ox_lib >= 3.40.1
+---derives its resource name from this (debug.getinfo(1, 'S').source).
+---@param resourceName string
 ---@param path string
-include = function(resource, path)
-    if path == nil then return end
-    local module = modules[path]
+include = function(resourceName, path)
+    if resourceName == nil or path == nil then return end
+    local key = ('%s:%s'):format(resourceName, path)
+    local module = modules[key]
     if not module then
-        local resource = LoadResourceFile(resource, ('%s.lua'):format(path))
-        if resource then
-            local module, err = load(resource, ('@@%s'):format(resource, ('%s'):format(path)))
-            if not module or err then
-                modules[path] = nil
+        local file = LoadResourceFile(resourceName, ('%s.lua'):format(path))
+        if file then
+            local chunk, err = load(file, ('@@%s/%s.lua'):format(resourceName, path))
+            if not chunk or err then
+                modules[key] = nil
                 return error(err)
             end
-            if Bridge.DebugMode then print(('[^2IMPORT^0] ^5Loaded^0 %s'):format(path)) end
-            modules[path] = module(path)
-            return modules[path]
+            if Bridge.DebugMode then print(('[^2IMPORT^0] ^5Loaded^0 %s/%s'):format(resourceName, path)) end
+            modules[key] = chunk(path)
+            return modules[key]
         end
     end
     return module
