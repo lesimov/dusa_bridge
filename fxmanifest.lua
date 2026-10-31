@@ -5,7 +5,7 @@ lua54 'yes'
 game 'gta5'
 
 author 'Dusa'
-version '0.9.8'
+version '0.9.9'
 description 'Dusa Bridge'
 
 shared_scripts {
